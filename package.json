@@ -7,7 +7,7 @@
   "author": "dakingha69 <dongha.kim210@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "zkp:setup": "node ./zkp/zokrates/setup.js"
+    "zkp:setup": "node ./zokrates/setup.js"
   },
   "devDependencies": {
     "eslint": "^6.8.0",

@@ -1,7 +1,7 @@
 {
   "name": "zkp",
   "version": "1.0.0",
-  "description": "Nightlines Zero-Knowledge Proof Service",
+  "description": "Nightlines Zokrates Wrapper",
   "main": "index.js",
   "author": "Dong-Ha Kim",
   "license": "MIT",

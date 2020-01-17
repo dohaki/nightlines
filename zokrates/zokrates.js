@@ -8,7 +8,7 @@ export function getZokratesInputDirAndFilePaths() {
   const dirNames = ["iou-burn", "iou-mint", "iou-transfer"];
   // const dirNames = ["iou-mint"];
   return dirNames.map(dirName => {
-    const dirPath = `${shell.pwd().stdout}/zkp/zokrates/${dirName}`;
+    const dirPath = `${shell.pwd().stdout}/zokrates/${dirName}`;
     // Assuming same input file name as input dir name for now
     const filePath = `${dirPath}/${dirName}.zok`;
     return {
@@ -33,7 +33,7 @@ export function compileZokratesCode(inputFilePath) {
     splittedInputFilePath.length - 1
   ].split(".")[0];
 
-  shell.echo(`⏳ Compiling '${inputFileName}.zok'...`);
+  shell.echo(`Compiling '${inputFileName}.zok'...`);
   const { stdout, stderr } = shell.exec(
     `zokrates compile -i ${inputFilePath} -o /${inputFileDirPath}/${inputFileName}-out`,
     {
@@ -43,7 +43,7 @@ export function compileZokratesCode(inputFilePath) {
 
   checkIfZokratesError(stdout, stderr, "Compilation failed.");
 
-  shell.echo(`✔️ Compilation successful. Written to '${inputFileName}-out'.`);
+  shell.echo(`Compilation successful. Written to '${inputFileName}-out'.`);
   return stdout;
 }
 
@@ -65,7 +65,7 @@ export async function generateTrustedSetup(inputDirPath) {
   const pkFilePath = `${inputDirPath}/${pkFileName}`;
   const provingScheme = `gm17`;
 
-  shell.echo(`⏳ Generating trusted setup for '${compiledInputFileName}'...`);
+  shell.echo(`Generating trusted setup for '${compiledInputFileName}'...`);
 
   return new Promise((resolve, reject) => {
     // Using child_process.spawn as shell.exec is limited in size
@@ -100,9 +100,9 @@ export async function generateTrustedSetup(inputDirPath) {
 
     zokratesProcess.on("close", () => {
       try {
-        checkIfZokratesError(stdout, stderr, "❌ Trusted setup failed.");
+        checkIfZokratesError(stdout, stderr, "Trusted setup failed.");
         shell.echo(
-          `✔️ Trusted setup successful. Keys written to '${vkFileName}' and '${pkFileName}'.`
+          `Trusted setup successful. Keys written to '${vkFileName}' and '${pkFileName}'.`
         );
         resolve(stdout);
       } catch (error) {
@@ -127,16 +127,16 @@ export function exportVerifierContract(inputDirPath) {
   const verifierContractName = `${inputFileName}-verifier.sol`;
   const provingScheme = `gm17`;
 
-  shell.echo(`⏳ Exporting verifier contract for '${inputFileName}'.`);
+  shell.echo(`Exporting verifier contract for '${inputFileName}'.`);
 
   const { stdout, stderr } = shell.exec(
     `zokrates export-verifier -i ${vkFilePath} -o ${inputDirPath}/${verifierContractName} -s ${provingScheme}`
   );
 
-  checkIfZokratesError(stdout, stderr, "❌ Verifier export failed.");
+  checkIfZokratesError(stdout, stderr, "Verifier export failed.");
 
   shell.echo(
-    `✔️ Verifier successfully exported. Written to '${verifierContractName}'.`
+    `Verifier successfully exported. Written to '${verifierContractName}'.`
   );
   return stdout;
 }
@@ -188,15 +188,13 @@ export function verifierToVkJson(inputDirPath) {
     jsonTxt.join("\n"),
     err => {
       if (err) {
-        shell.echo(
-          `❌ Extracting vk.json from ${verifierContractName} failed.`
-        );
+        shell.echo(`Extracting vk.json from ${verifierContractName} failed.`);
         throw err;
       }
     }
   );
   shell.echo(
-    `✔️ Extracted '${inputFileName}-vk.json' from '${verifierContractName}'.`
+    `Extracted '${inputFileName}-vk.json' from '${verifierContractName}'.`
   );
 }
 
