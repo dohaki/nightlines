@@ -1,0 +1,12 @@
+{
+  "name": "zkp",
+  "version": "1.0.0",
+  "description": "Nightlines Zero-Knowledge Proof Service",
+  "main": "index.js",
+  "author": "Dong-Ha Kim",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "shelljs": "^0.8.3"
+  }
+}

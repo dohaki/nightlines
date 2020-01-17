@@ -1,0 +1,25 @@
+{
+  "name": "nightlines",
+  "version": "1.0.0",
+  "description": "Nightlines Umbrella Project",
+  "main": "index.js",
+  "repository": "git@github.com:dakingha69/nightlines.git",
+  "author": "dakingha69 <dongha.kim210@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "zkp:setup": "node ./zkp/zokrates/setup.js"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "prettier": "^1.19.1"
+  },
+  "dependencies": {
+  }
+}
