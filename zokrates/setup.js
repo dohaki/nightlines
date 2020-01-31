@@ -1,5 +1,5 @@
 import shell from "shelljs";
-import * as zokrates from "./zokrates.js";
+import * as zokrates from "./index.js";
 
 async function main() {
   const zokratesInputDirAndFilePaths = zokrates.getZokratesInputDirAndFilePaths();
