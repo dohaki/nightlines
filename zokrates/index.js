@@ -1,6 +1,6 @@
 import shell from "shelljs";
 import { spawn } from "child_process";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { EOL } from "os";
 
 // TODO: Make generic
@@ -18,6 +18,20 @@ export function getZokratesInputDirAndFilePaths() {
   });
 }
 
+function getFileNameAndDir(inputFileOrDirPath) {
+  const splittedInputFilePath = inputFileOrDirPath.split("/");
+  const inputFileDirPath = splittedInputFilePath
+    .slice(0, splittedInputFilePath.length - 1)
+    .join("/");
+  const inputFileName = splittedInputFilePath[
+    splittedInputFilePath.length - 1
+  ].split(".")[0];
+  return {
+    inputFileName,
+    inputFileDirPath
+  };
+}
+
 /**
  * Compile code written in DLC Zokrates.
  * @param {String} inputFilePath Zokrates code to compile
@@ -25,13 +39,7 @@ export function getZokratesInputDirAndFilePaths() {
 export function compileZokratesCode(inputFilePath) {
   requireZokrates();
 
-  const splittedInputFilePath = inputFilePath.split("/");
-  const inputFileDirPath = splittedInputFilePath
-    .slice(0, splittedInputFilePath.length - 1)
-    .join("/");
-  const inputFileName = splittedInputFilePath[
-    splittedInputFilePath.length - 1
-  ].split(".")[0];
+  const { inputFileDirPath, inputFileName } = getFileNameAndDir(inputFilePath);
 
   shell.echo(`Compiling '${inputFileName}.zok'...`);
   const { stdout, stderr } = shell.exec(
@@ -55,8 +63,7 @@ export async function generateTrustedSetup(inputDirPath) {
   requireZokrates();
 
   // TODO: Make generic and configurable
-  const splitted = inputDirPath.split("/");
-  const inputFileName = `${splitted[splitted.length - 1]}`;
+  const { inputFileName } = getFileNameAndDir(inputDirPath);
   const compiledInputFileName = `${inputFileName}-out`;
   const compiledInputFilePath = `${inputDirPath}/${compiledInputFileName}`;
   const vkFileName = `${inputFileName}-vk.key`;
@@ -120,8 +127,7 @@ export function exportVerifierContract(inputDirPath) {
   requireZokrates();
 
   // TODO: Make generic and configurable
-  const splitted = inputDirPath.split("/");
-  const inputFileName = `${splitted[splitted.length - 1]}`;
+  const { inputFileName } = getFileNameAndDir(inputDirPath);
   const vkFileName = `${inputFileName}-vk.key`;
   const vkFilePath = `${inputDirPath}/${vkFileName}`;
   const verifierContractName = `${inputFileName}-verifier.sol`;
@@ -143,8 +149,7 @@ export function exportVerifierContract(inputDirPath) {
 
 export function verifierToVkJson(inputDirPath) {
   // TODO: Make generic and configurable
-  const splitted = inputDirPath.split("/");
-  const inputFileName = `${splitted[splitted.length - 1]}`;
+  const { inputFileName } = getFileNameAndDir(inputDirPath);
   const verifierContractName = `${inputFileName}-verifier.sol`;
 
   const solData = readFileSync(`${inputDirPath}/${verifierContractName}`)
@@ -196,6 +201,59 @@ export function verifierToVkJson(inputDirPath) {
   shell.echo(
     `Extracted '${inputFileName}-vk.json' from '${verifierContractName}'.`
   );
+}
+
+/**
+ * Computes a witness from a .zok file from `compileZokratesCode()` and outputs an witness file.
+ */
+export async function computeWitness(inputDirPath, args) {
+  if (!existsSync(inputDirPath)) {
+    throw new Error("computeWitness input file(s) not found");
+  }
+  const { inputFileName } = getFileNameAndDir(inputDirPath);
+  const inputFile = `${inputFileName}.zok`;
+  const outputFile = `${inputFileName}-witness`;
+
+  shell.echo(`Computing witness for '${inputFile}'...`);
+
+  return new Promise((resolve, reject) => {
+    const zokratesProcess = spawn(
+      "zokrates",
+      [
+        "compute-witness",
+        "-i",
+        `${inputDirPath}/${inputFile}`,
+        "-o",
+        `${inputDirPath}/${outputFile}`,
+        "-a",
+        ...args
+      ],
+      {
+        stdio: ["ignore", "pipe", "pipe"]
+      }
+    );
+
+    let stdout = "";
+    let stderr = "";
+
+    zokratesProcess.stdout.on("data", data => {
+      stdout += data.toString("utf8");
+    });
+
+    zokratesProcess.stderr.on("data", err => {
+      stderr += err.toString("utf8");
+    });
+
+    zokratesProcess.on("close", () => {
+      try {
+        checkIfZokratesError(stdout, stderr, "Witness computation failed.");
+        shell.echo(`Compute witness success. Written to '${outputFile}'.`);
+        resolve(stdout);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
 }
 
 function requireZokrates() {
