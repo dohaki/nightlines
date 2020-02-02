@@ -8,10 +8,12 @@
 import BI from "big-integer";
 import hexToBinary from "hex-to-binary";
 import crypto from "crypto";
-import { Buffer } from "safe-buffer";
-import { config } from "shelljs";
+import safeBuffer from "safe-buffer";
+import config from "./config/index.js";
 
 const inputsHashLength = 32;
+
+const { Buffer } = safeBuffer;
 
 // FUNCTIONS ON HEX VALUES
 
@@ -335,6 +337,11 @@ export function decToHex(decStr) {
 // Converts decimal value strings to binary values
 export function decToBin(decStr) {
   return convertBase(decStr, 10, 2);
+}
+
+export function decToPaddedHex(decStr, length) {
+  const hex = decToHex(decStr);
+  return leftPadHex(hex, length);
 }
 
 /** Checks whether a decimal integer is larger than N bits, and splits its binary representation into chunks of size = N bits. The left-most (big endian) chunk will be the only chunk of size <= N bits. If the inequality is strict, it left-pads this left-most chunk with zeros.

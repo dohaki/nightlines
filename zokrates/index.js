@@ -3,6 +3,8 @@ import { spawn } from "child_process";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { EOL } from "os";
 
+const PROVING_SCHEME = "gm17";
+
 // TODO: Make generic
 export function getZokratesInputDirAndFilePaths() {
   const dirNames = ["iou-burn", "iou-mint", "iou-transfer"];
@@ -70,7 +72,6 @@ export async function generateTrustedSetup(inputDirPath) {
   const vkFilePath = `${inputDirPath}/${vkFileName}`;
   const pkFileName = `${inputFileName}-pk.key`;
   const pkFilePath = `${inputDirPath}/${pkFileName}`;
-  const provingScheme = `gm17`;
 
   shell.echo(`Generating trusted setup for '${compiledInputFileName}'...`);
 
@@ -83,7 +84,7 @@ export async function generateTrustedSetup(inputDirPath) {
         "-i",
         compiledInputFilePath,
         "-s",
-        provingScheme,
+        PROVING_SCHEME,
         "-v",
         vkFilePath,
         "-p",
@@ -131,12 +132,11 @@ export function exportVerifierContract(inputDirPath) {
   const vkFileName = `${inputFileName}-vk.key`;
   const vkFilePath = `${inputDirPath}/${vkFileName}`;
   const verifierContractName = `${inputFileName}-verifier.sol`;
-  const provingScheme = `gm17`;
 
   shell.echo(`Exporting verifier contract for '${inputFileName}'.`);
 
   const { stdout, stderr } = shell.exec(
-    `zokrates export-verifier -i ${vkFilePath} -o ${inputDirPath}/${verifierContractName} -s ${provingScheme}`
+    `zokrates export-verifier -i ${vkFilePath} -o ${inputDirPath}/${verifierContractName} -s ${PROVING_SCHEME}`
   );
 
   checkIfZokratesError(stdout, stderr, "Verifier export failed.");
@@ -211,7 +211,7 @@ export async function computeWitness(inputDirPath, args) {
     throw new Error("computeWitness input file(s) not found");
   }
   const { inputFileName } = getFileNameAndDir(inputDirPath);
-  const inputFile = `${inputFileName}.zok`;
+  const inputFile = `${inputFileName}-out`;
   const outputFile = `${inputFileName}-witness`;
 
   shell.echo(`Computing witness for '${inputFile}'...`);
@@ -221,6 +221,7 @@ export async function computeWitness(inputDirPath, args) {
       "zokrates",
       [
         "compute-witness",
+        "--light",
         "-i",
         `${inputDirPath}/${inputFile}`,
         "-o",
@@ -256,6 +257,61 @@ export async function computeWitness(inputDirPath, args) {
   });
 }
 
+/**
+ * Generate proof
+ */
+export async function generateProof(inputDirPath) {
+  if (!existsSync(inputDirPath)) {
+    throw new Error("generateProof input file(s) not found");
+  }
+
+  const { inputFileName } = getFileNameAndDir(inputDirPath);
+  const inputFile = `${inputFileName}-out`;
+  const witnessFile = `${inputFileName}-witness`;
+  const pkFile = `${inputFileName}-pk.key`;
+  const proofFile = `${inputFileName}-proof.json`;
+
+  shell.echo(`Generating proof for '${inputFile}'...`);
+
+  return new Promise((resolve, reject) => {
+    const zokratesProcess = spawn(
+      "zokrates",
+      [
+        "generate-proof",
+        "-i",
+        `${inputDirPath}/${inputFile}`,
+        "-s",
+        PROVING_SCHEME,
+        "-w",
+        `${inputDirPath}/${witnessFile}`,
+        "-p",
+        `${inputDirPath}/${pkFile}`,
+        "-j",
+        `${inputDirPath}/${proofFile}`
+      ],
+      {
+        stdio: ["ignore", "ignore", "pipe"]
+      }
+    );
+
+    let stderr = "";
+
+    zokratesProcess.stderr.on("data", err => {
+      stderr += err.toString("utf8");
+    });
+
+    zokratesProcess.on("close", () => {
+      try {
+        checkIfZokratesError("", stderr, "Proof generation failed.");
+        shell.echo(`Proof generation success. Written to '${proofFile}'.`);
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
+
 function requireZokrates() {
   if (!shell.which("zokrates")) {
     throw new Error(
@@ -265,7 +321,13 @@ function requireZokrates() {
 }
 
 function checkIfZokratesError(stdout, stderr, errorMsg) {
-  if (stderr || stdout.includes("panicked") || stdout.includes("error")) {
+  if (
+    stderr ||
+    stdout.includes("panicked") ||
+    stdout.includes("error") ||
+    stdout.includes("failed") ||
+    stdout.includes("invalid")
+  ) {
     shell.echo(errorMsg);
     throw new Error(stderr || stdout);
   }
