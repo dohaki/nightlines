@@ -8,7 +8,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "zkp:setup": "node ./zokrates/setup.js"
+    "zkp:setup": "node ./zokrates/setup.js",
+    "start": "node index.js",
   },
   "devDependencies": {
     "eslint": "^6.8.0",
@@ -25,6 +26,7 @@
     "big-integer": "^1.6.48",
     "crypto": "^1.0.1",
     "ethers": "^4.0.44",
+    "express": "^4.17.1",
     "hex-to-binary": "^1.0.1",
     "node-fetch": "^2.6.0",
     "safe-buffer": "^5.2.0",

@@ -109,3 +109,5 @@ dist
 *.key
 *-verifier.sol
 *-vk.json
+*-witness
+*-proof.json
