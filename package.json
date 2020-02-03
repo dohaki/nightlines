@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "zkp:setup": "node ./zokrates/setup.js",
-    "start": "node index.js",
+    "start": "node index.js"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
