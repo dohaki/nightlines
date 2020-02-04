@@ -1,6 +1,8 @@
 import React from 'react';
 import { Flex, Text, Box } from "rebass";
 
+import { getCurrentUsername } from "../apis/sessionStorage";
+
 export default function NavBar() {
   return (
     <Flex
@@ -14,7 +16,7 @@ export default function NavBar() {
     >
       <Text fontWeight='bold'>Nightlines</Text>
       <Box mx='auto' />
-      <Text>ALICE</Text>
+      <Text>{getCurrentUsername().toUpperCase()}</Text>
     </Flex>
   )
 };
