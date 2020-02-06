@@ -1,4 +1,5 @@
 import { TLNetwork } from "trustlines-clientlib";
+import * as tlUtils from "trustlines-clientlib/lib-esm/utils";
 import { get } from "lodash";
 
 import * as nightlines from "./nightlines";
@@ -9,6 +10,14 @@ const tlNetwork = new TLNetwork({
   port: config.RELAY_PORT,
   path: "/api/v1",
 });
+
+function wait(waitingTime = 1000) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, waitingTime);
+  })
+}
 
 export async function createUser(username) {
   const walletData = await tlNetwork.user.create();
@@ -77,3 +86,54 @@ export async function getUserOverview(
     userAddress
   )
 }
+
+export async function getGatewayDeposit(
+  gatewayAddress,
+  userAddress
+) {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/gateways/${gatewayAddress}/deposits/${userAddress}`);
+  const deposit = await response.json();
+  return tlUtils.formatToAmount(deposit, 18);
+}
+
+export async function getGateway(gatewayAddress) {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/gateways/${gatewayAddress}`);
+  const gateway = await response.json();
+  return gateway;
+}
+
+export async function openCollateralized(
+  gatewayAddress,
+  collateral,
+  given
+) {
+  const openCollateralizedTx = await tlNetwork.trustline.prepareOpenCollateralized(
+    gatewayAddress,
+    collateral,
+    given
+  );
+  const txHash = await confirmTx(openCollateralizedTx.rawTx);
+  // TODO
+  await wait();
+
+  const { gatedNetworkAddress } = await getGateway(gatewayAddress);
+  const updateRequests = await tlNetwork.trustline.getRequests(
+    gatedNetworkAddress
+  );
+
+  const collateralRequest = updateRequests.find(({ transactionId }) => transactionId === txHash);
+  const acceptTx = await tlNetwork.trustline.prepareAccept(
+    collateralRequest.networkAddress,
+    gatewayAddress,
+    collateralRequest.received.value,
+    collateralRequest.given.value
+  );
+  await confirmTx(acceptTx.rawTx);
+  await wait();
+}
+
+export async function confirmTx(rawTx) {
+  return tlNetwork.transaction.confirm(rawTx);
+}
+
+

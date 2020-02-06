@@ -1,17 +1,8 @@
-import { useEffect, useState } from 'react';
-import { get } from "lodash";
+import { useState } from 'react';
 
-export default function useSelectedNetwork(
-  networks = [],
-  index = 0
-) {
+export default function useSelectedNetwork() {
   const [selectedNetwork, setSelectedNetwork] = useState();
 
-  useEffect(() => {
-    const network = get(networks, `[${index}]`);
-    setSelectedNetwork(network);
-  }, [index, networks]);
-
-  return selectedNetwork;
+  return { selectedNetwork, setSelectedNetwork };
 }
 

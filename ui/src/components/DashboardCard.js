@@ -7,7 +7,7 @@ export default function DashboardCard(props) {
       m={4}
       p={3}
       sx={{
-        maxWidth: 512,
+        minWidth: 512,
         boxShadow: 'dashboardCard'
       }}
       {...props}

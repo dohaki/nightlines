@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import * as tlLib from "../apis/tlLib";
 
-export default function useUserOverview(
-  networkAddress,
-  userAddress
-) {
+export default function useUserOverview() {
   const [overview, setOverview] = useState({});
 
-  async function fetchOverview() {
+  async function fetchOverview(
+    networkAddress,
+    userAddress
+  ) {
     const overview = await tlLib.getUserOverview(
       networkAddress,
       userAddress
@@ -16,12 +16,6 @@ export default function useUserOverview(
     setOverview(overview);
   }
 
-  useEffect(() => {
-    if (networkAddress && userAddress) {
-      fetchOverview()
-    }
-  }, [networkAddress, userAddress]);
-
-  return [overview, fetchOverview];
+  return { overview, fetchOverview };
 }
 

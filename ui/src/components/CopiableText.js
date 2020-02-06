@@ -9,11 +9,14 @@ export default function CopiableText(props) {
       onClick={() => {
         copyToClipboard(props.id);
       }}
+      maxWidth={340}
       sx={{
-      ":hover": {
-        color: "secondary",
-        cursor: "pointer"
-      },
-    }} {...props} />
+        ":hover": {
+          color: "secondary",
+          cursor: "pointer"
+        },
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      }} {...props} />
   )
 }

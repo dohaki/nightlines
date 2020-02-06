@@ -10,10 +10,6 @@ export default function useCoinBalance() {
     setCoinBalance(balance);
   }
 
-  useEffect(() => {
-    fetchCoinBalance()
-  }, []);
-
-  return [coinBalance, fetchCoinBalance];
+  return { coinBalance, fetchCoinBalance };
 }
 
