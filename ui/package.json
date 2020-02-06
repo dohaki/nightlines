@@ -18,7 +18,8 @@
     "react-toastify": "^5.5.0",
     "rebass": "^4.0.7",
     "theme-ui": "^0.3.1",
-    "trustlines-clientlib": "git://github.com/dakingha69/clientlib.git#nightlines"
+    "trustlines-clientlib": "git://github.com/dakingha69/clientlib.git#nightlines",
+    "unstated-next": "^1.1.0"
   },
   "scripts": {
     "start": "react-scripts start",
