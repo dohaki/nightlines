@@ -12,3 +12,9 @@ export function setCurrentUsername(username) {
     username.toLowerCase()
   );
 }
+
+export function removeCurrentUsername() {
+  sessionStorage.removeItem(
+    `${LOCAL_STORAGE_ITEM_PREFIX}-current-username`
+  )
+}

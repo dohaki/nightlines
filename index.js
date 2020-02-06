@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 
 import * as iou from "./iou.js";
 import config from "./config/index.js";
@@ -8,6 +9,25 @@ import * as utils from "./utils.js";
 const app = express();
 
 app.use(express.json());
+app.use(cors());
+
+/**
+ * @example
+ * curl 127.0.0.1:3001/zkp-key-pair
+ */
+app.get("/zkp-key-pair", async (req, res) => {
+  try {
+    const zkpPrivateKey = await utils.randomHex(32);
+    const zkpPublicKey = await utils.hash(zkpPrivateKey);
+    res.json({
+      zkpPrivateKey,
+      zkpPublicKey
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+});
 
 /**
  * @example

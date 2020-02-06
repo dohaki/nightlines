@@ -1,9 +1,12 @@
 import React from 'react';
 import { Flex, Text, Box } from "rebass";
+import { useHistory } from "react-router-dom";
 
-import { getCurrentUsername } from "../apis/sessionStorage";
+import { removeCurrentUsername } from "../apis/sessionStorage";
 
-export default function NavBar() {
+export default function NavBar(props) {
+  const history = useHistory();
+
   return (
     <Flex
       sx={{
@@ -16,7 +19,12 @@ export default function NavBar() {
     >
       <Text fontWeight='bold'>Nightlines</Text>
       <Box mx='auto' />
-      <Text>{getCurrentUsername().toUpperCase()}</Text>
+      <Text onClick={() => {
+        removeCurrentUsername();
+        history.replace("/login");
+      }}>
+        Logout
+      </Text>
     </Flex>
   )
 };

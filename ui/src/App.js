@@ -5,11 +5,15 @@ import {
   Switch,
   Route
 } from "react-router-dom";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 import theme from "./theme";
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+
+toast.configure();
 
 function App() {
   return (
