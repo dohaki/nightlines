@@ -31,6 +31,20 @@ app.get("/zkp-key-pair", async (req, res) => {
 
 /**
  * @example
+ * curl 127.0.0.1:3001/random-salt
+ */
+app.get("/random-salt", async (req, res) => {
+  try {
+    const salt = await utils.randomHex(32);
+    res.json({ salt });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+});
+
+/**
+ * @example
  * curl -X POST 127.0.0.1:3001/mint-iou-commitment -H "Content-Type: application/json" --data '{ "amount": 100, "zkpPublicKey": "0xcd5618889e18a1d3e7a2cb9b1bb3270bc08753aae1c60f82d1fc71957e8e984c", "salt": "0x0d8533cfd32693a2ecbd72be5ff05456972de489c5f8273116cab1191a3323e8" }'
  */
 app.post("/mint-iou-commitment", async (req, res) => {
@@ -46,7 +60,8 @@ app.post("/mint-iou-commitment", async (req, res) => {
       commitment,
       proof,
       publicInputs,
-      amount
+      amount,
+      salt
     });
   } catch (error) {
     console.log(error);
