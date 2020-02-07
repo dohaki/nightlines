@@ -1,22 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import * as tlLib from "../apis/tlLib";
 
-export default function useNetworks(isUserLoaded = false) {
+export default function useNetworks() {
   const [networks, setNetworks] = useState([]);
 
-  useEffect(() => {
-    async function getEnrichedNetworks() {
-      const enrichedNetworks = await tlLib.getEnrichedNetworks();
-      setNetworks(enrichedNetworks);
-    }
-   
-    // only fetch networks if user in session is loaded
-    if (isUserLoaded) {
-      getEnrichedNetworks();
-    }
-  }, [isUserLoaded, setNetworks]);
+  async function fetchNetworks() {
+    const enrichedNetworks =  await tlLib.getEnrichedNetworks()
+    setNetworks(enrichedNetworks);
+  }
 
-  return networks;
+  return { networks, fetchNetworks };
 }
 

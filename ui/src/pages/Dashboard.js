@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { get } from "lodash";
+import { useHistory } from "react-router-dom";
 import { Select } from "@rebass/forms";
 import { Box, Flex } from "rebass";
 
@@ -8,15 +9,31 @@ import OverviewCard from '../components/OverviewCard'
 import GatewayCard from '../components/GatewayCard'
 import ShieldCard from '../components/ShieldCard'
 
-import useLoadedUser from "../hooks/useLoadedUser";
 import useNetworks from "../hooks/useNetworks";
 import store from "../store";
+import * as sessionStorage from "../apis/sessionStorage";
 
 export default function Dashboard() {
-  const [isLoaded, loadedUser] = useLoadedUser();
-  const networks = useNetworks(isLoaded);
+  const history = useHistory();
   const [selectedNetworkIndex, setSelectedNetworkIndex] = useState(0);
-  const { selectedNetwork, setSelectedNetwork } = store.useContainer();
+  const {
+    setSelectedNetwork,
+    loadUserByUsername,
+    loadedUser,
+    networks,
+    fetchNetworks
+  } = store.useContainer();
+
+  useEffect(() => {
+    // check if logged in user in session and load
+    const currentUsername = sessionStorage.getCurrentUsername();
+    if (!currentUsername) {
+      history.replace("/login")
+    } else {
+      loadUserByUsername(currentUsername);
+      fetchNetworks();
+    }
+  }, []);
 
   useEffect(() => {
     if (networks.length > 0) {
@@ -42,16 +59,10 @@ export default function Dashboard() {
         </Select>
       </Box>
       <Box mx='auto' />
-      {isLoaded ? (
+      {loadedUser ? (
         <Flex justifyContent={"space-between"} flexWrap={"wrap"}>
-          <OverviewCard
-            username={get(loadedUser, "username")}
-            userAddress={get(loadedUser, "walletData.address")}
-            zkpPublicKey={get(loadedUser, "zkpKeyPair.zkpPublicKey")}
-          />
-          <GatewayCard
-            userAddress={get(loadedUser, "walletData.address")}
-          />
+          <OverviewCard />
+          <GatewayCard />
           <ShieldCard />
         </Flex>
       ) : null}

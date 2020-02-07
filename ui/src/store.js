@@ -4,6 +4,8 @@ import useCoinBalance from "./hooks/useCoinBalance";
 import useGatewayDeposit from "./hooks/useGatewayDeposit";
 import useUserOverview from "./hooks/useUserOverview";
 import useSelectedNetwork from "./hooks/useSelectedNetwork";
+import useLoadedUser from "./hooks/useLoadedUser";
+import useNetworks from "./hooks/useNetworks";
 
 const composeHooks = (...hooks) => () => hooks.reduce(
   (acc, hook) => {
@@ -20,7 +22,9 @@ const store = createContainer(composeHooks(
   useCoinBalance,
   useGatewayDeposit,
   useUserOverview,
-  useSelectedNetwork
+  useSelectedNetwork,
+  useLoadedUser,
+  useNetworks
 ))
 
 export default store
