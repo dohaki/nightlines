@@ -9,25 +9,27 @@ import store from "../store";
 
 import * as tlLib from "../apis/tlLib";
 
-export default function OverviewCard({
-  username = "",
-  userAddress,
-  zkpPublicKey
-}) {
+export default function OverviewCard() {
   const {
     coinBalance,
     fetchCoinBalance,
     overview,
     fetchOverview,
-    selectedNetwork
+    selectedNetwork,
+    loadedUser
   } = store.useContainer();
 
+  const iouAddress = get(selectedNetwork, "address");
+  const userAddress = get(loadedUser, "walletData.address");
+  const username = get(loadedUser, "username");
+  const zkpPublicKey = get(loadedUser, "zkpKeyPair.zkpPublicKey");
+
   useEffect(() => {
-    if (userAddress && get(selectedNetwork, "address")) {
+    if (userAddress && iouAddress) {
       fetchCoinBalance();
-      fetchOverview(selectedNetwork.address, userAddress);
+      fetchOverview(iouAddress, userAddress);
     }
-  }, [userAddress, get(selectedNetwork, "address")])
+  }, [userAddress, iouAddress])
 
   const available = Number(get(overview, "balance.value", 0)) +
     Number(get(overview, "leftReceived.value", 0))

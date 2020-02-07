@@ -132,6 +132,25 @@ export async function openCollateralized(
   await wait();
 }
 
+export async function mintCommitment(
+  shieldAddress,
+  proof,
+  inputs,
+  mintValue,
+  commitment,
+) {
+  const mintTx = await tlNetwork.shield.prepareMintCommitment(
+    shieldAddress,
+    proof,
+    inputs,
+    mintValue,
+    commitment
+  );
+  const mintTxHash = await confirmTx(mintTx.rawTx);
+  await wait();
+  // TODO get leaves
+}
+
 export async function confirmTx(rawTx) {
   return tlNetwork.transaction.confirm(rawTx);
 }
