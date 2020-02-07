@@ -6,6 +6,7 @@ import { Box, Flex } from "rebass";
 import NavBar from '../components/NavBar'
 import OverviewCard from '../components/OverviewCard'
 import GatewayCard from '../components/GatewayCard'
+import ShieldCard from '../components/ShieldCard'
 
 import useLoadedUser from "../hooks/useLoadedUser";
 import useNetworks from "../hooks/useNetworks";
@@ -44,18 +45,14 @@ export default function Dashboard() {
       {isLoaded ? (
         <Flex justifyContent={"space-between"} flexWrap={"wrap"}>
           <OverviewCard
-            iouAbbreviation={get(selectedNetwork, "abbreviation")}
-            iouAddress={get(selectedNetwork, "address")}
             username={get(loadedUser, "username")}
             userAddress={get(loadedUser, "walletData.address")}
             zkpPublicKey={get(loadedUser, "zkpKeyPair.zkpPublicKey")}
           />
           <GatewayCard
-            gatewayAddress={get(selectedNetwork, "gateway.address")}
             userAddress={get(loadedUser, "walletData.address")}
-            iouAbbreviation
-            iouAddress={get(selectedNetwork)}
           />
+          <ShieldCard />
         </Flex>
       ) : null}
     </>
