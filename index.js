@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import { readFileSync } from "fs";
+import shell from "shelljs";
 
 import * as iou from "./iou.js";
 import config from "./config/index.js";
@@ -37,6 +39,38 @@ app.get("/random-salt", async (req, res) => {
   try {
     const salt = await utils.randomHex(32);
     res.json({ salt });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+});
+
+/**
+ * @example
+ * curl 127.0.0.1:3001/vk-json?type=<"mint"|"burn"|"transfer">
+ */
+app.get("/vk", async (req, res) => {
+  try {
+    const availableVKTypes = ["burn", "mint", "transfer"];
+    const { type } = req.query;
+
+    if (!availableVKTypes.includes(type)) {
+      throw new Error("No VK JSON available for given type.");
+    }
+
+    const vkJSON = JSON.parse(
+      readFileSync(
+        `${shell.pwd()}/zokrates/iou-${type}/iou-${type}-vk.json`,
+        "utf-8"
+      )
+    );
+    const vkDecimalsArray = utils
+      .flattenDeep(Object.values(vkJSON))
+      .map(value => utils.hexToDec(value));
+    res.json({
+      vk: vkJSON,
+      vkDecimalsArray
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
