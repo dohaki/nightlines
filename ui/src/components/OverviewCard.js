@@ -23,6 +23,7 @@ export default function OverviewCard() {
   const userAddress = get(loadedUser, "walletData.address");
   const username = get(loadedUser, "username");
   const zkpPublicKey = get(loadedUser, "zkpKeyPair.zkpPublicKey");
+  const zkpPrivateKey = get(loadedUser, "zkpKeyPair.zkpPrivateKey");
 
   useEffect(() => {
     if (userAddress && iouAddress) {
@@ -46,9 +47,15 @@ export default function OverviewCard() {
         </CopiableText>
       </Flex>
       <Flex justifyContent={"space-between"} color={"primary"}>
-        <Text>ZKP PK:</Text>
+        <Text>ZKP PubKey:</Text>
         <CopiableText id={"zkp-public-key"}>
           {zkpPublicKey}
+        </CopiableText>
+      </Flex>
+      <Flex justifyContent={"space-between"} color={"primary"}>
+        <Text>ZKP PrivKey:</Text>
+        <CopiableText id={"zkp-private-key"}>
+          {zkpPrivateKey}
         </CopiableText>
       </Flex>
       <Flex justifyContent={"space-between"}>

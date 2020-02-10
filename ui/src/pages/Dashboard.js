@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { get } from "lodash";
 import { useHistory } from "react-router-dom";
 import { Select } from "@rebass/forms";
 import { Box, Flex } from "rebass";
@@ -8,8 +7,8 @@ import NavBar from '../components/NavBar'
 import OverviewCard from '../components/OverviewCard'
 import GatewayCard from '../components/GatewayCard'
 import ShieldCard from '../components/ShieldCard'
+import CommitmentsCard from '../components/CommitmentsCard'
 
-import useNetworks from "../hooks/useNetworks";
 import store from "../store";
 import * as sessionStorage from "../apis/sessionStorage";
 
@@ -64,6 +63,7 @@ export default function Dashboard() {
           <OverviewCard />
           <GatewayCard />
           <ShieldCard />
+          <CommitmentsCard />
         </Flex>
       ) : null}
     </>
