@@ -6,6 +6,7 @@ import useUserOverview from "./hooks/useUserOverview";
 import useSelectedNetwork from "./hooks/useSelectedNetwork";
 import useLoadedUser from "./hooks/useLoadedUser";
 import useNetworks from "./hooks/useNetworks";
+import useCommitments from "./hooks/useCommitments";
 
 const composeHooks = (...hooks) => () => hooks.reduce(
   (acc, hook) => {
@@ -16,7 +17,7 @@ const composeHooks = (...hooks) => () => hooks.reduce(
       throw new Error('there exist same key in multiple hooks');
     }
   }, {}
-)
+);
 
 const store = createContainer(composeHooks(
   useCoinBalance,
@@ -24,7 +25,8 @@ const store = createContainer(composeHooks(
   useUserOverview,
   useSelectedNetwork,
   useLoadedUser,
-  useNetworks
-))
+  useNetworks,
+  useCommitments
+));
 
-export default store
+export default store;

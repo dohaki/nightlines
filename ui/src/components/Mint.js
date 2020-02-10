@@ -19,7 +19,12 @@ export default function Mint() {
   const [mintValue, setMintValue] = useState(0);
   const [isVKRegistered, setVKRegistered] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { selectedNetwork, loadedUser, fetchOverview } = store.useContainer();
+  const {
+    selectedNetwork,
+    loadedUser,
+    fetchOverview,
+    fetchCommitments
+  } = store.useContainer();
 
   const shieldAddress = get(selectedNetwork, "shield.address");
   const iouAbbreviation = get(selectedNetwork, "abbreviation");
@@ -68,7 +73,8 @@ export default function Mint() {
         {
           shieldAddress,
           commitmentIndex: mintCommitment.commitmentIndex,
-          commitment: mintCommitment.commitment,
+          commitment: mintProof.commitment,
+          salt: randomSalt,
           amount: {
             value: mintValue,
             raw: mintValueRaw,
@@ -80,6 +86,7 @@ export default function Mint() {
       console.log("Stored commitment: ", storedCommitment);
       toast("Successfully minted commitment", { type: "success" });
       fetchOverview(iouAddress, userAddress);
+      fetchCommitments(username);
     } catch (error) {
       toast(error.toString(), { type: "error" });
     } finally {

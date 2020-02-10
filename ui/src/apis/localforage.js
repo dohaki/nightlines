@@ -48,10 +48,21 @@ export async function setCommitment(
 ) {
   const instance = createInstance(username);
   return instance.setItem(commitment, {
+    commitment,
     commitmentIndex,
     shieldAddress,
     amount,
     type,
     salt
   });
+}
+
+export async function getCommitmentsByUsername(username) {
+  const instance = createInstance(username);
+  let commitments = [];
+  await instance.iterate((value, key) => {
+    if (value.commitment)
+    commitments.push(value);
+  });
+  return commitments;
 }
