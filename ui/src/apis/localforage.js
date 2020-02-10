@@ -34,3 +34,24 @@ export async function setUser({ username, walletData, zkpKeyPair }) {
   const instance = createInstance(username);
   return instance.setItem("user", { username, walletData, zkpKeyPair });
 }
+
+export async function setCommitment(
+  username,
+  {
+    commitment,
+    commitmentIndex,
+    shieldAddress,
+    amount,
+    type,
+    salt
+  }
+) {
+  const instance = createInstance(username);
+  return instance.setItem(commitment, {
+    commitmentIndex,
+    shieldAddress,
+    amount,
+    type,
+    salt
+  });
+}

@@ -6,6 +6,8 @@ import * as nightlines from "./nightlines";
 
 import config from "../config";
 
+const VK_TYPES = ['mint', 'transfer', 'burn'];
+
 const tlNetwork = new TLNetwork({
   port: config.RELAY_PORT,
   path: "/api/v1",
@@ -108,6 +110,16 @@ export async function getNewLeafEvents(shieldAddress) {
   return events;
 }
 
+export async function getRegisteredVK(
+  shieldAddress,
+  vkType
+) {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/shields/${shieldAddress}/vks`);
+  const registeredVKs = await response.json();
+  const vkTypeIndex = VK_TYPES.indexOf(vkType);
+  return registeredVKs[vkTypeIndex];
+}
+
 export async function openCollateralized(
   gatewayAddress,
   collateral,
@@ -136,6 +148,24 @@ export async function openCollateralized(
   );
   await confirmTx(acceptTx.rawTx);
   await wait();
+}
+
+export async function registerVK(
+  shieldAddress,
+  vkType
+) {
+  const vk = await nightlines.getVKOf(vkType);
+  const registerVKTx = await tlNetwork.shield.prepareRegisterVK(
+    shieldAddress,
+    vk.vkDecimalsArray,
+    vkType,
+    {
+      gasLimit: "2000000"
+    }
+  );
+  const registerVKTxHash = await confirmTx(registerVKTx.rawTx);
+  await wait();
+  return registerVKTxHash;
 }
 
 export async function mintCommitment(

@@ -14,6 +14,12 @@ export async function getRandomSalt() {
   return salt;
 }
 
+export async function getVKOf(type) {
+  const response = await fetch(`${NIGHTLINES_URL}/vk?type=${type}`);
+  const vk = await response.json();
+  return vk;
+}
+
 export async function getMintProof(
   mintValueRaw,
   zkpPublicKey,
