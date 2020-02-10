@@ -102,6 +102,12 @@ export async function getGateway(gatewayAddress) {
   return gateway;
 }
 
+export async function getNewLeafEvents(shieldAddress) {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/shields/${shieldAddress}/events?type=NewLeaf`);
+  const events = await response.json();
+  return events;
+}
+
 export async function openCollateralized(
   gatewayAddress,
   collateral,
@@ -144,15 +150,32 @@ export async function mintCommitment(
     proof,
     inputs,
     mintValue,
-    commitment
+    commitment,
+    {
+      gasLimit: "2000000"
+    }
   );
   const mintTxHash = await confirmTx(mintTx.rawTx);
   await wait();
-  // TODO get leaves
+  const newLeafEvents = await getNewLeafEvents(shieldAddress);
+  const relevantEvent = newLeafEvents.find(({ transactionId }) => transactionId === mintTxHash);
+
+  if (!relevantEvent) {
+    throw new Error("No NewLeaf event thrown while minting")
+  }
+
+  return {
+    txHash: mintTxHash,
+    type: "mint",
+    commitment,
+    commitmentIndex: relevantEvent.leafIndex,
+  }
 }
 
 export async function confirmTx(rawTx) {
   return tlNetwork.transaction.confirm(rawTx);
 }
 
-
+export async function getShieldedNetwork(shieldAddress) {
+  return tlNetwork.currencyNetwork.getShieldedNetwork(shieldAddress);
+}

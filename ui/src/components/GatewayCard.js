@@ -13,12 +13,14 @@ import store from "../store";
 
 import * as tlLib from "../apis/tlLib";
 
-export default function GatewayCard({ userAddress }) {
+export default function GatewayCard() {
   const {
     gatewayDeposit,
     fetchGatewayDeposit,
     fetchOverview,
-    selectedNetwork
+    fetchCoinBalance,
+    selectedNetwork,
+    loadedUser
   } = store.useContainer();
   const [collateral, setCollateral] = useState(0);
   const [iouGiven, setIOUGiven] = useState(0);
@@ -27,6 +29,7 @@ export default function GatewayCard({ userAddress }) {
   const gatewayAddress = get(selectedNetwork, "gateway.address");
   const iouAddress = get(selectedNetwork, "address");
   const iouAbbreviation = get(selectedNetwork, "abbreviation");
+  const userAddress = get(loadedUser, "walletData.address");
 
   useEffect(() => {
     if (gatewayAddress && userAddress) {
@@ -47,6 +50,7 @@ export default function GatewayCard({ userAddress }) {
       );
       fetchOverview(iouAddress, userAddress);
       fetchGatewayDeposit(gatewayAddress, userAddress);
+      fetchCoinBalance();
       setCollateral(0);
       setIOUGiven(0);
       toast("Deposit success", { type: "success" });

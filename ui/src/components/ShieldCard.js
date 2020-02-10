@@ -24,7 +24,7 @@ export default function ShieldCard() {
         overflowX={"hidden"}
       >
         <Text>Address:</Text>
-        <CopiableText id={"gateway-address"}>
+        <CopiableText id={"shield-address"}>
           {shieldAddress}
         </CopiableText>
       </Flex>

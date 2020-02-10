@@ -4,9 +4,10 @@ import { readFileSync } from "fs";
 import shell from "shelljs";
 
 import * as iou from "./iou.js";
-import config from "./config/index.js";
-
 import * as utils from "./utils.js";
+import * as merkleTree from "./merkle-tree/index.js";
+
+import config from "./config/index.js";
 
 const app = express();
 
@@ -97,6 +98,34 @@ app.post("/mint-iou-commitment", async (req, res) => {
       amount,
       salt
     });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+});
+
+// MERKLE TREE
+
+app.get("/leaf-by-leaf-index", async (req, res) => {
+  try {
+    const { shieldAddress, leafIndex } = req.query;
+    const leaf = await merkleTree.getLeafByLeafIndex(shieldAddress, leafIndex);
+    return { leaf };
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+});
+
+app.get("/sibling-path", async (req, res) => {
+  try {
+    const { shieldAddress, commitment, commitmentIndex } = req.query;
+    const siblingPath = await merkleTree.getSiblingPath(
+      shieldAddress,
+      commitment,
+      commitmentIndex
+    );
+    return { siblingPath };
   } catch (error) {
     console.log(error);
     res.status(500).json(error);

@@ -15,11 +15,31 @@ export async function getRandomSalt() {
 }
 
 export async function getMintProof(
-  mintValue,
+  mintValueRaw,
   zkpPublicKey,
   salt
 ) {
-  const response = await fetch(`${NIGHTLINES_URL}/mint-iou-commitment`);
+  // TODO mintValue to raw
+  const response = await fetch(`${NIGHTLINES_URL}/mint-iou-commitment`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      amount: mintValueRaw,
+      zkpPublicKey,
+      salt
+    })
+  });
   const proof = await response.json();
   return proof;
+}
+
+export async function getLeafByLeafIndex(
+  shieldAddress,
+  leafIndex
+) {
+  const response = await fetch(`${NIGHTLINES_URL}/leaf-by-leaf-index`);
+  const keyPair = await response.json();
+  return keyPair;
 }
