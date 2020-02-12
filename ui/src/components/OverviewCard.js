@@ -33,8 +33,7 @@ export default function OverviewCard() {
     // eslint-disable-next-line
   }, [userAddress, iouAddress])
 
-  const available = Number(get(overview, "balance.value", 0)) +
-    Number(get(overview, "leftReceived.value", 0))
+  const available = Number(get(overview, "leftReceived.value", 0))
 
   return (
     <DashboardCard>

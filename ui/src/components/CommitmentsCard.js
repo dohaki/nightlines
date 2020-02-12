@@ -75,8 +75,8 @@ export default function CommitmentsCard() {
           Amount
         </Text>
       </Flex>
-      {commitments.map(commitment => (
-        <Flex justifyContent={"space-between"}>
+      {commitments.map((commitment, i) => (
+        <Flex key={i} justifyContent={"space-between"}>
           <TruncatedText
             width={128}
             lineThrough={commitment.spent}

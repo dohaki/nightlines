@@ -43,7 +43,8 @@ export async function setCommitment(
     shieldAddress,
     amount,
     type,
-    salt
+    salt,
+    gasUsed
   }
 ) {
   const instance = createInstance(username);
@@ -53,7 +54,8 @@ export async function setCommitment(
     shieldAddress,
     amount,
     type,
-    salt
+    salt,
+    gasUsed
   });
 }
 

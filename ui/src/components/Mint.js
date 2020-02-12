@@ -79,13 +79,15 @@ export default function Mint() {
             raw: mintValueRaw,
             decimals
           },
-          type: "mint"
+          type: "mint",
+          gasUsed: mintCommitment.gasUsed
         }
       );
       console.log("Stored commitment: ", storedCommitment);
       toast("Successfully minted commitment", { type: "success" });
       fetchOverview(iouAddress, userAddress);
       fetchCommitments(username);
+      setMintValue(0);
     } catch (error) {
       toast(error.toString(), { type: "error" });
     } finally {
@@ -100,6 +102,7 @@ export default function Mint() {
         "mint"
       );
       toast(`Mint VK successfully registered`, { type: "success" });
+      setVKRegistered(true);
     }
   }
 

@@ -49,6 +49,12 @@ export async function getNetworks() {
   return tlNetwork.currencyNetwork.getAll();
 }
 
+export async function getLatesBlocknumber() {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/blocknumber`)
+  const blocknumber = await response.json()
+  return blocknumber
+}
+
 export async function getShields() {
   const response = await fetch(`${tlNetwork.provider.relayApiUrl}/shields`)
   const shields = await response.json()
@@ -59,6 +65,16 @@ export async function getGateways() {
   const response = await fetch(`${tlNetwork.provider.relayApiUrl}/gateways`)
   const gateways = await response.json()
   return gateways
+}
+
+export async function getGasUsedForTx(
+  shieldAddress,
+  txHash,
+  fromBlock = 0
+) {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/shields/${shieldAddress}/events?type=GasUsed&fromBlock=${fromBlock}`);
+  const events = await response.json();
+  return events.find(({ transactionId }) => transactionId === txHash);
 }
 
 export async function getEnrichedNetworks() {
@@ -104,8 +120,8 @@ export async function getGateway(gatewayAddress) {
   return gateway;
 }
 
-export async function getNewLeafEvents(shieldAddress) {
-  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/shields/${shieldAddress}/events?type=NewLeaf`);
+export async function getNewLeafEvents(shieldAddress, fromBlock = 0) {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/shields/${shieldAddress}/events?type=NewLeaf&fromBlock=${fromBlock}`);
   const events = await response.json();
   return events;
 }
@@ -186,8 +202,15 @@ export async function mintCommitment(
     }
   );
   const mintTxHash = await confirmTx(mintTx.rawTx);
+  
   await wait();
-  const newLeafEvents = await getNewLeafEvents(shieldAddress);
+
+  const latestBlocknumber = await getLatesBlocknumber();
+
+  // Add information on used gas for statistics
+  const gasUsed = await getGasUsedForTx(shieldAddress, mintTxHash, latestBlocknumber);
+  
+  const newLeafEvents = await getNewLeafEvents(shieldAddress, latestBlocknumber);
   const relevantEvent = newLeafEvents.find(({ transactionId }) => transactionId === mintTxHash);
 
   if (!relevantEvent) {
@@ -199,6 +222,11 @@ export async function mintCommitment(
     type: "mint",
     commitment,
     commitmentIndex: relevantEvent.leafIndex,
+    gasUsed: {
+      byVerifierContract: get(gasUsed, "byVerifierContract"),
+      byShieldContract: get(gasUsed, "byShieldContract"),
+      byCurrencyNetworkContract: get(gasUsed, "byCurrencyNetworkContract"),
+    }
   }
 }
 
