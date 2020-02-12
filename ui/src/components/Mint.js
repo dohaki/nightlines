@@ -7,7 +7,6 @@ import { toast } from 'react-toastify';
 import * as tlUtils from "trustlines-clientlib/lib-esm/utils";
 
 import Button from "./Button";
-import Badge from "./Badge";
 
 import store from "../store";
 

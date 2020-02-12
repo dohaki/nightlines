@@ -3,7 +3,6 @@ import { Text, Flex } from "rebass";
 import { get } from "lodash";
 
 import DashboardCard from "./DashboardCard";
-import CopiableText from "./CopiableText";
 import TruncatedText from "./TruncatedText";
 
 import store from "../store";
@@ -23,6 +22,7 @@ export default function CommitmentsCard() {
     if (username) {
       fetchCommitments(username);
     }
+    // eslint-disable-next-line
   }, [username]);
 
   const { unspentCommitments, spentCommitments } = commitments.reduce((filteredCommitments, commitment) => {
@@ -46,7 +46,7 @@ export default function CommitmentsCard() {
   return (
     <DashboardCard>
       <Text textAlign={"center"} fontWeight={"bold"} mb={2}>
-        COMMITMENTS
+        NOTES
       </Text>
       <Flex
         justifyContent={"space-between"}
@@ -54,11 +54,11 @@ export default function CommitmentsCard() {
         mb={3}
       >
         <Text>{iouAbbreviation} Spendable:</Text>
-        <CopiableText id={"user-address"}>
+        <Text>
           {spendable}
-        </CopiableText>
+        </Text>
       </Flex>
-      <Flex>
+      <Flex justifyContent={"space-between"}>
         <Text width={128} fontWeight={"bold"}>
           Commitment
         </Text>
@@ -76,23 +76,39 @@ export default function CommitmentsCard() {
         </Text>
       </Flex>
       {commitments.map(commitment => (
-        <Flex>
-          <TruncatedText width={128} >
+        <Flex justifyContent={"space-between"}>
+          <TruncatedText
+            width={128}
+            lineThrough={commitment.spent}
+          >
             {commitment.commitment}
           </TruncatedText>
-          <TruncatedText width={128} color={"primary"}>
+          <TruncatedText
+            width={128}
+            color={"primary"}
+            lineThrough={commitment.spent}
+          >
             {commitment.salt}
           </TruncatedText>
-          <TruncatedText width={64} textAlign={"center"}>
+          <TruncatedText
+            width={64}
+            textAlign={"center"}
+            lineThrough={commitment.spent}
+          >
             {commitment.commitmentIndex}
           </TruncatedText>
-          <TruncatedText width={64} textAlign={"center"}>
+          <TruncatedText
+            width={64}
+            textAlign={"center"}
+            lineThrough={commitment.spent}
+          >
             {commitment.type}
           </TruncatedText>
           <TruncatedText
             width={64}
             textAlign={"center"}
             color={commitment.type === "transfer" && "primary"}
+            lineThrough={commitment.spent}
           >
             {commitment.amount.value}
           </TruncatedText>

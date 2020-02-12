@@ -32,13 +32,14 @@ export default function Dashboard() {
       loadUserByUsername(currentUsername);
       fetchNetworks();
     }
-  }, []);
+    // eslint-disable-next-line
+  }, [history]);
 
   useEffect(() => {
     if (networks.length > 0) {
       setSelectedNetwork(networks[selectedNetworkIndex]);
     }
-  }, [selectedNetworkIndex, networks])
+  }, [selectedNetworkIndex, networks, setSelectedNetwork])
 
   return (
     <>

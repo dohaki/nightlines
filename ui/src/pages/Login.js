@@ -18,7 +18,7 @@ export default function Login() {
     if (sessionStorage.getCurrentUsername()) {
       history.replace("/")
     }
-  }, [])
+  }, [history])
 
   const handleClick = async () => {
     let user = await localforage.getUserByUsername(username)

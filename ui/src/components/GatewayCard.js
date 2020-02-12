@@ -38,6 +38,7 @@ export default function GatewayCard() {
         userAddress
       );
     }
+    // eslint-disable-next-line
   }, [gatewayAddress, userAddress]);
 
   const handleClick = async () => {

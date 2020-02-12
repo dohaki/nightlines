@@ -8,6 +8,7 @@ export default function TruncatedText(props) {
       sx={{
         overflow: "hidden",
         textOverflow: "ellipsis",
+        textDecoration: props.lineThrough && "line-through"
       }} {...props} />
   )
 }

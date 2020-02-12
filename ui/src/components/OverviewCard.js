@@ -30,6 +30,7 @@ export default function OverviewCard() {
       fetchCoinBalance();
       fetchOverview(iouAddress, userAddress);
     }
+    // eslint-disable-next-line
   }, [userAddress, iouAddress])
 
   const available = Number(get(overview, "balance.value", 0)) +
