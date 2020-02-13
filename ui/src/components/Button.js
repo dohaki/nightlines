@@ -4,10 +4,15 @@ import { Button as RebassButton  } from "rebass";
 export default function Button(props) {
   return (
     <RebassButton sx={{
-      ":hover": {
-        bg: "secondary",
-        cursor: "pointer"
-      },
+      ":hover": props.disabled
+        ? {}
+        : {
+            bg: "secondary",
+            cursor: "pointer"
+          },
+      filter: props.disabled
+        ? "grayscale(50%)"
+        : "grayscale(0%)"
     }} {...props} />
   )
 }
