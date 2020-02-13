@@ -114,7 +114,7 @@ export default function GatewayCard() {
             minWidth={150}
           >
             {loading ? (
-              <FiLoader size={15} />
+              "Depositing..."
             ) : "Deposit"}
           </Button>
         </Box>

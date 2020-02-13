@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Text, Flex, Box } from "rebass";
 import { Input } from "@rebass/forms";
 import { get } from "lodash";
-import { FiLoader } from "react-icons/fi";
 import { toast } from 'react-toastify';
 import * as tlUtils from "trustlines-clientlib/lib-esm/utils";
 
@@ -30,6 +29,7 @@ export default function Mint() {
   const iouAddress = get(selectedNetwork, "address");
   const userAddress = get(loadedUser, "walletData.address");
   const username = get(loadedUser, "username");
+  const zkpPublicKey = get(loadedUser, "zkpKeyPair.zkpPublicKey");
 
   useEffect(() => {
     async function getRegisteredMintVK() {
@@ -53,7 +53,7 @@ export default function Mint() {
       const randomSalt = await nightlines.getRandomSalt();
       const mintProof = await nightlines.getMintProof(
         mintValueRaw,
-        get(loadedUser, "zkpKeyPair.zkpPublicKey"),
+        zkpPublicKey,
         randomSalt
       );
       toast(`Proof generated for commitment: ${mintProof.commitment}`, { type: "info" });
@@ -71,6 +71,7 @@ export default function Mint() {
         username,
         {
           shieldAddress,
+          zkpPublicKey, 
           commitmentIndex: mintCommitment.commitmentIndex,
           commitment: mintProof.commitment,
           salt: randomSalt,
@@ -133,7 +134,7 @@ export default function Mint() {
           minWidth={150}
         >
           {loading ? (
-            <FiLoader size={15} />
+            "Minting..."
           ) : "Mint"}
         </Button>
       </Box>
