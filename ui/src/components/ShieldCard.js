@@ -6,6 +6,7 @@ import { get } from "lodash";
 import DashboardCard from "./DashboardCard";
 import CopiableText from "./CopiableText";
 import Mint from "./Mint";
+import Transfer from "./Transfer";
 
 import store from "../store";
 
@@ -29,6 +30,7 @@ export default function ShieldCard() {
         </CopiableText>
       </Flex>
       <Mint />
+      <Transfer />
     </DashboardCard>
   )
 };
