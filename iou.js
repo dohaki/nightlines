@@ -6,23 +6,36 @@
 
 import { readFileSync } from "fs";
 import shell from "shelljs";
+import chalk from "chalk";
 
 import * as zokrates from "./zokrates/index.js";
 import * as utils from "./utils.js";
 import config from "./config/index.js";
 
+function logTitle(title) {
+  console.log("\n" + chalk.inverse(title));
+}
+
+function logProofInput(name, hex, number) {
+  console.log("  " + name);
+  console.log("    hex: " + chalk.green(hex));
+  console.log("    field: " + chalk.green(number));
+}
+
 /**
  * Mint a IOU token commitment.
- * @param {string} iouAmountRaw - Amount of IOUs to mint in smallest representation.
+ * @param {string} amount - Amount of IOUs to mint in smallest representation.
  * @param {string} zkpPublicKey - The minter's ZKP public key. Note that this is NOT the same as their Ethereum address.
  * @param {string} salt - The minters's token serial number as a hex string.
- * @returns {{
+ * @returns {Promise<{
  *  commitment: string,
- *  commitmentIndex: number
- * }}
+ *  proof: string[],
+ *  publicInputs: string[],
+ *  amount: string
+ * }>}
  */
 export async function mint(amount, zkpPublicKey, salt) {
-  console.log("Mint IOU Commitment");
+  logTitle("⛏️  Mint IOU Commitment");
   // Calculate new arguments for the proof:
   const commitment = utils.concatenateThenHash(amount, zkpPublicKey, salt);
 
@@ -30,33 +43,26 @@ export async function mint(amount, zkpPublicKey, salt) {
   const pt = Math.ceil(
     (config.MERKLE_TREE_LEAF_HASHLENGTH * 8) / config.ZOKRATES_PACKING_SIZE
   ); // packets in bits
-  console.log(`amount: ${amount} :: ${utils.hexToFieldPreserve(amount, p, 1)}`);
-  console.log(
-    `publicKey: ${zkpPublicKey} :: ${utils.hexToFieldPreserve(
-      zkpPublicKey,
-      p,
-      pt
-    )}`
-  );
-  console.log(`salt: ${salt} :: ${utils.hexToFieldPreserve(salt, p, pt)}`);
 
-  console.log("New Proof Variables:");
-  console.log(
-    `commitment: ${commitment} :: ${utils.hexToFieldPreserve(
-      commitment,
-      p,
-      pt
-    )}`
+  console.log("Proof Inputs:");
+  logProofInput("amount", amount, utils.hexToFieldPreserve(amount, p, 1));
+  logProofInput(
+    "publicKey",
+    zkpPublicKey,
+    utils.hexToFieldPreserve(zkpPublicKey, p, pt)
+  );
+  logProofInput("salt", salt, utils.hexToFieldPreserve(salt, p, pt));
+  logProofInput(
+    "commitment",
+    commitment,
+    utils.hexToFieldPreserve(commitment, p, pt)
   );
 
   const publicInputHash = utils.concatenateThenHash(amount, commitment);
-  console.log(
-    `publicInputHash: ${publicInputHash} :: ${utils.hexToFieldPreserve(
-      publicInputHash,
-      248,
-      1,
-      1
-    )}`
+  logProofInput(
+    "publicInputHash",
+    publicInputHash,
+    utils.hexToFieldPreserve(publicInputHash, 248, 1, 1)
   );
 
   const allInputs = utils.formatInputsForZkSnark([
@@ -66,15 +72,6 @@ export async function mint(amount, zkpPublicKey, salt) {
     utils.toProofElement(salt, "field"),
     utils.toProofElement(commitment, "field")
   ]);
-
-  console.log(
-    "To debug witness computation, paste these arguments into the terminal:"
-  );
-  console.log(
-    `zokrates compute-witness -a ${allInputs.join(
-      " "
-    )} -i zokrates/iou-mint/iou-mint-out`
-  );
 
   const mintInputDir = `${shell.pwd()}/zokrates/iou-mint`;
 
@@ -96,49 +93,27 @@ export async function mint(amount, zkpPublicKey, salt) {
     utils.toProofElement(publicInputHash, "field", 248, 1)
   ]);
 
-  console.log("proof:");
+  console.log("Proof:");
   console.log(proof);
-  console.log("publicInputs:");
+  console.log("PublicInputs:");
   console.log(publicInputs);
 
   return { commitment, proof, publicInputs, amount };
 }
 
-// /**
-//  * This function actually transfers a coin.
-//  * @param {Array} inputCommitments - Array of two commitments owned by the sender.
-//  * @param {Array} outputCommitments - Array of two commitments.
-//  * Currently the first is sent to the receiverPublicKey, and the second is sent to the sender.
-//  * @param {String} receiverZkpPublicKey - Receiver's Zkp Public Key
-//  * @param {String} senderZkpPrivateKey - Private key of the sender's
-//  * @param {Object} blockchainOptions
-//  * @param {String} blockchainOptions.fTokenShieldJson - ABI of fTokenShieldInstance
-//  * @param {String} blockchainOptions.fTokenShieldAddress - Address of deployed fTokenShieldContract
-//  * @param {String} blockchainOptions.account - Account that is sending these transactions
-//  * @returns {Object[]} outputCommitments - Updated outputCommitments with their commitments and indexes.
-//  * @returns {Object} Transaction object
-//  */
-// async function transfer(
-//   _inputCommitments,
-//   _outputCommitments,
-//   receiverZkpPublicKey,
-//   senderZkpPrivateKey,
-//   blockchainOptions,
-//   zokratesOptions
+/**
+ * @param {string[]} inputCommitments - Array of two commitments owned by the sender.
+ * @param {string[]} outputCommitments - Array of two commitments.
+ * Currently the first is sent to the receiverPublicKey, and the second is sent to the sender.
+ * @param {string} zkpPublicKeyReceiver - Receiver's ZKP public Key
+ * @param {string} zkpPrivateKeySender - Sender's ZKP private key
+ */
+// export async function transfer(
+//   inputCommitments,
+//   outputCommitments,
+//   zkpPublicKeyReceiver,
+//   zkpPrivateKeySender,
 // ) {
-//   const { fTokenShieldJson, fTokenShieldAddress } = blockchainOptions;
-//   const account = utils.ensure0x(blockchainOptions.account);
-
-//   const {
-//     codePath,
-//     outputDirectory,
-//     witnessName = "witness",
-//     pkPath,
-//     provingScheme = "gm17",
-//     createProofJson = true,
-//     proofName = "proof.json"
-//   } = zokratesOptions;
-
 //   console.log("\nIN TRANSFER...");
 
 //   console.log("Finding the relevant Shield and Verifier contracts");

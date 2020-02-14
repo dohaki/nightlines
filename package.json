@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "big-integer": "^1.6.48",
+    "chalk": "^3.0.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "ethers": "^4.0.44",
