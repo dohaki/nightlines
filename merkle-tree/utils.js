@@ -2,11 +2,16 @@ import config from "../config/index.js";
 
 const TREE_WIDTH = 2 ** config.MERKLE_TREE_HEIGHT;
 
+function rightShift(integer, shift) {
+  return Math.floor(integer / 2 ** shift);
+}
+
 /**
  * Converts given leafIndex into respective nodeIndex.
  * @param {number} leafIndex
  */
 export function leafIndexToNodeIndex(leafIndex) {
+  leafIndex = Number(leafIndex);
   return leafIndex + TREE_WIDTH - 1;
 }
 
@@ -24,6 +29,7 @@ export function nodeIndexToLeafIndex(nodeIndex) {
  * @param {number} nodeIndex
  */
 function siblingNodeIndex(nodeIndex) {
+  nodeIndex = Number(nodeIndex);
   return nodeIndex % 2 === 1 ? nodeIndex + 1 : nodeIndex - 1;
 }
 
@@ -32,7 +38,8 @@ function siblingNodeIndex(nodeIndex) {
  * @param {number} nodeIndex
  */
 function parentNodeIndex(nodeIndex) {
-  return nodeIndex % 2 === 1 ? nodeIndex >>> 1 : (nodeIndex - 1) >>> 1;
+  nodeIndex = Number(nodeIndex);
+  return rightShift(nodeIndex % 2 === 1 ? nodeIndex : nodeIndex - 1, 1);
 }
 
 /**
@@ -41,6 +48,7 @@ function parentNodeIndex(nodeIndex) {
  * @returns {number[]}
  */
 export function getSiblingPathIndices(nodeIndex) {
+  nodeIndex = Number(nodeIndex);
   if (nodeIndex === 0) return [0]; // terminal case
 
   const indices = getSiblingPathIndices(parentNodeIndex(nodeIndex));
