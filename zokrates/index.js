@@ -2,13 +2,18 @@ import shell from "shelljs";
 import { spawn } from "child_process";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { EOL } from "os";
+import chalk from "chalk";
+
+export function log(message) {
+  console.log(`${chalk.magenta("ZoKrates")} ${message}`);
+}
 
 const PROVING_SCHEME = "gm17";
 
 // TODO: Make generic
 export function getZokratesInputDirAndFilePaths() {
-  const dirNames = ["iou-burn", "iou-mint", "iou-transfer"];
-  // const dirNames = ["iou-transfer"];
+  // const dirNames = ["iou-burn", "iou-mint", "iou-transfer"];
+  const dirNames = ["iou-transfer"];
   return dirNames.map(dirName => {
     const dirPath = `${shell.pwd().stdout}/zokrates/${dirName}`;
     // Assuming same input file name as input dir name for now
@@ -43,7 +48,7 @@ export function compileZokratesCode(inputFilePath) {
 
   const { inputFileDirPath, inputFileName } = getFileNameAndDir(inputFilePath);
 
-  shell.echo(`Compiling '${inputFileName}.zok'...`);
+  log(`Compiling '${inputFileName}.zok'...`);
   const { stdout, stderr } = shell.exec(
     `zokrates compile -i ${inputFilePath} -o /${inputFileDirPath}/${inputFileName}-out`,
     {
@@ -53,7 +58,7 @@ export function compileZokratesCode(inputFilePath) {
 
   checkIfZokratesError(stdout, stderr, "Compilation failed.");
 
-  shell.echo(`Compilation successful. Written to '${inputFileName}-out'.`);
+  log(`Compilation successful. Written to '${inputFileName}-out'.`);
   return stdout;
 }
 
@@ -73,7 +78,7 @@ export async function generateTrustedSetup(inputDirPath) {
   const pkFileName = `${inputFileName}-pk.key`;
   const pkFilePath = `${inputDirPath}/${pkFileName}`;
 
-  shell.echo(`Generating trusted setup for '${compiledInputFileName}'...`);
+  log(`Generating trusted setup for '${compiledInputFileName}'...`);
 
   return new Promise((resolve, reject) => {
     // Using child_process.spawn as shell.exec is limited in size
@@ -109,7 +114,7 @@ export async function generateTrustedSetup(inputDirPath) {
     zokratesProcess.on("close", () => {
       try {
         checkIfZokratesError(stdout, stderr, "Trusted setup failed.");
-        shell.echo(
+        log(
           `Trusted setup successful. Keys written to '${vkFileName}' and '${pkFileName}'.`
         );
         resolve(stdout);
@@ -133,7 +138,7 @@ export function exportVerifierContract(inputDirPath) {
   const vkFilePath = `${inputDirPath}/${vkFileName}`;
   const verifierContractName = `${inputFileName}-verifier.sol`;
 
-  shell.echo(`Exporting verifier contract for '${inputFileName}'.`);
+  log(`Exporting verifier contract for '${inputFileName}'.`);
 
   const { stdout, stderr } = shell.exec(
     `zokrates export-verifier -i ${vkFilePath} -o ${inputDirPath}/${verifierContractName} -s ${PROVING_SCHEME}`
@@ -141,9 +146,7 @@ export function exportVerifierContract(inputDirPath) {
 
   checkIfZokratesError(stdout, stderr, "Verifier export failed.");
 
-  shell.echo(
-    `Verifier successfully exported. Written to '${verifierContractName}'.`
-  );
+  log(`Verifier successfully exported. Written to '${verifierContractName}'.`);
   return stdout;
 }
 
@@ -198,9 +201,7 @@ export function verifierToVkJson(inputDirPath) {
       }
     }
   );
-  shell.echo(
-    `Extracted '${inputFileName}-vk.json' from '${verifierContractName}'.`
-  );
+  log(`Extracted '${inputFileName}-vk.json' from '${verifierContractName}'.`);
 }
 
 /**
@@ -214,7 +215,7 @@ export async function computeWitness(inputDirPath, args) {
   const inputFile = `${inputFileName}-out`;
   const outputFile = `${inputFileName}-witness`;
 
-  shell.echo(`Computing witness for '${inputFile}'...`);
+  log(`Computing witness for '${inputFile}'...`);
 
   return new Promise((resolve, reject) => {
     const zokratesProcess = spawn(
@@ -248,7 +249,7 @@ export async function computeWitness(inputDirPath, args) {
     zokratesProcess.on("close", () => {
       try {
         checkIfZokratesError(stdout, stderr, "Witness computation failed.");
-        shell.echo(`Compute witness success. Written to '${outputFile}'.`);
+        log(`Compute witness success. Written to '${outputFile}'.`);
         resolve(stdout);
       } catch (error) {
         reject(error);
@@ -271,7 +272,7 @@ export async function generateProof(inputDirPath) {
   const pkFile = `${inputFileName}-pk.key`;
   const proofFile = `${inputFileName}-proof.json`;
 
-  shell.echo(`Generating proof for '${inputFile}'...`);
+  log(`Generating proof for '${inputFile}'...`);
 
   return new Promise((resolve, reject) => {
     const zokratesProcess = spawn(
@@ -303,7 +304,7 @@ export async function generateProof(inputDirPath) {
     zokratesProcess.on("close", () => {
       try {
         checkIfZokratesError("", stderr, "Proof generation failed.");
-        shell.echo(`Proof generation success. Written to '${proofFile}'.`);
+        log(`Proof generation success. Written to '${proofFile}'.`);
         resolve();
       } catch (error) {
         reject(error);

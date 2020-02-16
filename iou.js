@@ -9,6 +9,7 @@ import shell from "shelljs";
 import chalk from "chalk";
 
 import * as zokrates from "./zokrates/index.js";
+import * as merkleTree from "./merkle-tree/index.js";
 import * as utils from "./utils.js";
 import config from "./config/index.js";
 
@@ -16,15 +17,27 @@ function logTitle(title) {
   console.log("\n" + chalk.inverse(title));
 }
 
-function logProofInput(name, hex, number) {
-  console.log("  " + name);
-  console.log("    hex: " + chalk.green(hex));
-  console.log("    field: " + chalk.green(number));
+function logProofInput(name, hexOrValue, number) {
+  if (number) {
+    const splittedNumbers = String(number).split(",");
+    console.log("  " + name);
+    console.log(`    hex: ${chalk.green(hexOrValue)}`);
+    console.log(
+      `    field: ${chalk.yellow(splittedNumbers[0])}${
+        splittedNumbers[1] ? "," + chalk.yellow(splittedNumbers[1]) : ""
+      }`
+    );
+  } else {
+    console.log("  " + name);
+    console.log("    " + hexOrValue);
+  }
 }
+
+const durationLogLabel = `${chalk.magenta("ZoKrates")} Duration`;
 
 /**
  * Mint a IOU token commitment.
- * @param {string} amount - Amount of IOUs to mint in smallest representation.
+ * @param {string} amount - Amount of IOUs to mint in smallest decimals representation.
  * @param {string} zkpPublicKey - The minter's ZKP public key. Note that this is NOT the same as their Ethereum address.
  * @param {string} salt - The minters's token serial number as a hex string.
  * @returns {Promise<{
@@ -37,28 +50,31 @@ function logProofInput(name, hex, number) {
 export async function mint(amount, zkpPublicKey, salt) {
   logTitle("⛏️  Mint IOU Commitment");
   // Calculate new arguments for the proof:
-  const commitment = utils.concatenateThenHash(amount, zkpPublicKey, salt);
+  const amountHex = utils.decToPaddedHex(String(amount), 32);
+  const commitment = utils.concatenateThenHash(amountHex, zkpPublicKey, salt);
 
   const p = config.ZOKRATES_PACKING_SIZE;
   const pt = Math.ceil(
     (config.MERKLE_TREE_LEAF_HASHLENGTH * 8) / config.ZOKRATES_PACKING_SIZE
   ); // packets in bits
 
-  console.log("Proof Inputs:");
-  logProofInput("amount", amount, utils.hexToFieldPreserve(amount, p, 1));
+  console.log("Exisiting Proof Inputs:");
+  logProofInput("amount", amountHex, utils.hexToFieldPreserve(amountHex, p, 1));
   logProofInput(
     "publicKey",
     zkpPublicKey,
     utils.hexToFieldPreserve(zkpPublicKey, p, pt)
   );
   logProofInput("salt", salt, utils.hexToFieldPreserve(salt, p, pt));
+
+  console.log("Generated Proof Inputs:");
   logProofInput(
     "commitment",
     commitment,
     utils.hexToFieldPreserve(commitment, p, pt)
   );
 
-  const publicInputHash = utils.concatenateThenHash(amount, commitment);
+  const publicInputHash = utils.concatenateThenHash(amountHex, commitment);
   logProofInput(
     "publicInputHash",
     publicInputHash,
@@ -67,7 +83,7 @@ export async function mint(amount, zkpPublicKey, salt) {
 
   const allInputs = utils.formatInputsForZkSnark([
     utils.toProofElement(publicInputHash, "field", 248, 1),
-    utils.toProofElement(amount, "field", 128, 1),
+    utils.toProofElement(amountHex, "field", 128, 1),
     utils.toProofElement(zkpPublicKey, "field"),
     utils.toProofElement(salt, "field"),
     utils.toProofElement(commitment, "field")
@@ -75,9 +91,13 @@ export async function mint(amount, zkpPublicKey, salt) {
 
   const mintInputDir = `${shell.pwd()}/zokrates/iou-mint`;
 
+  console.time(durationLogLabel);
   await zokrates.computeWitness(mintInputDir, allInputs);
+  console.timeEnd(durationLogLabel);
 
+  console.time(durationLogLabel);
   await zokrates.generateProof(mintInputDir);
+  console.timeEnd(durationLogLabel);
 
   let { proof } = JSON.parse(
     readFileSync(`${mintInputDir}/iou-mint-proof.json`)
@@ -102,335 +122,322 @@ export async function mint(amount, zkpPublicKey, salt) {
 }
 
 /**
- * @param {string[]} inputCommitments - Array of two commitments owned by the sender.
- * @param {string[]} outputCommitments - Array of two commitments.
+ * @param {{
+ *  commitment: string,
+ *  commitmentIndex: number,
+ *  salt: string,
+ *  amount: { raw: string }
+ * }[]} inputCommitments - Array of two commitments owned by the sender.
+ * @param {{
+ *  salt: string,
+ *  amount: { raw: string }
+ * }[]} outputCommitments - Array of two commitments.
  * Currently the first is sent to the receiverPublicKey, and the second is sent to the sender.
  * @param {string} zkpPublicKeyReceiver - Receiver's ZKP public Key
  * @param {string} zkpPrivateKeySender - Sender's ZKP private key
  */
-// export async function transfer(
-//   inputCommitments,
-//   outputCommitments,
-//   zkpPublicKeyReceiver,
-//   zkpPrivateKeySender,
-// ) {
-//   console.log("\nIN TRANSFER...");
+export async function transfer(
+  shieldAddress,
+  inputCommitments,
+  outputCommitments,
+  zkpPublicKeyReceiver,
+  zkpPrivateKeySender
+) {
+  logTitle("💸 Transfer IOU Commitment");
 
-//   console.log("Finding the relevant Shield and Verifier contracts");
-//   const fTokenShield = contract(fTokenShieldJson);
-//   fTokenShield.setProvider(Web3.connect());
-//   const fTokenShieldInstance = await fTokenShield.at(fTokenShieldAddress);
+  inputCommitments[0].amountHex = utils.decToPaddedHex(
+    String(inputCommitments[0].amount.raw),
+    32
+  );
+  inputCommitments[1].amountHex = utils.decToPaddedHex(
+    String(inputCommitments[1].amount.raw),
+    32
+  );
+  outputCommitments[0].amountHex = utils.decToPaddedHex(
+    String(outputCommitments[0].amount.raw),
+    32
+  );
+  outputCommitments[1].amountHex = utils.decToPaddedHex(
+    String(outputCommitments[1].amount.raw),
+    32
+  );
 
-//   const inputCommitments = _inputCommitments;
-//   const outputCommitments = _outputCommitments;
+  // due to limitations in the size of the adder implemented in the proof dsl, we need C+D and E+F to easily fit in <128 bits (16 bytes). They could of course be bigger than we allow here.
+  const inputSum =
+    parseInt(inputCommitments[0].amountHex, 16) +
+    parseInt(inputCommitments[1].amountHex, 16);
+  const outputSum =
+    parseInt(outputCommitments[0].amountHex, 16) +
+    parseInt(outputCommitments[1].amountHex, 16);
+  if (inputSum > 0xffffffff || outputSum > 0xffffffff) {
+    throw new Error(`Input commitments' values are too large`);
+  }
 
-//   // due to limitations in the size of the adder implemented in the proof dsl, we need C+D and E+F to easily fit in <128 bits (16 bytes). They could of course be bigger than we allow here.
-//   const inputSum =
-//     parseInt(inputCommitments[0].value, 16) +
-//     parseInt(inputCommitments[1].value, 16);
-//   const outputSum =
-//     parseInt(outputCommitments[0].value, 16) +
-//     parseInt(outputCommitments[1].value, 16);
-//   if (inputSum > 0xffffffff || outputSum > 0xffffffff)
-//     throw new Error(`Input commitments' values are too large`);
+  // Calculate new arguments for the proof:
+  const zkpPublicKeySender = utils.hash(zkpPrivateKeySender);
+  inputCommitments[0].nullifier = utils.concatenateThenHash(
+    inputCommitments[0].salt,
+    zkpPrivateKeySender
+  );
+  inputCommitments[1].nullifier = utils.concatenateThenHash(
+    inputCommitments[1].salt,
+    zkpPrivateKeySender
+  );
 
-//   // Calculate new arguments for the proof:
-//   const senderPublicKey = utils.hash(senderZkpPrivateKey);
-//   inputCommitments[0].nullifier = utils.concatenateThenHash(
-//     inputCommitments[0].salt,
-//     senderZkpPrivateKey
-//   );
-//   inputCommitments[1].nullifier = utils.concatenateThenHash(
-//     inputCommitments[1].salt,
-//     senderZkpPrivateKey
-//   );
+  outputCommitments[0].commitment = utils.concatenateThenHash(
+    outputCommitments[0].amountHex,
+    zkpPublicKeyReceiver,
+    outputCommitments[0].salt
+  );
+  outputCommitments[1].commitment = utils.concatenateThenHash(
+    outputCommitments[1].amountHex,
+    zkpPublicKeySender,
+    outputCommitments[1].salt
+  );
 
-//   outputCommitments[0].commitment = utils.concatenateThenHash(
-//     outputCommitments[0].value,
-//     receiverZkpPublicKey,
-//     outputCommitments[0].salt
-//   );
-//   outputCommitments[1].commitment = utils.concatenateThenHash(
-//     outputCommitments[1].value,
-//     senderPublicKey,
-//     outputCommitments[1].salt
-//   );
+  // Get the sibling-path from the IOU commitments (leaves) to the root. Express each node as an Element class.
+  inputCommitments[0].siblingPath = await merkleTree.getSiblingPath(
+    shieldAddress,
+    inputCommitments[0].commitment,
+    inputCommitments[0].commitmentIndex
+  );
+  inputCommitments[1].siblingPath = await merkleTree.getSiblingPath(
+    shieldAddress,
+    inputCommitments[1].commitment,
+    inputCommitments[1].commitmentIndex
+  );
 
-//   // Get the sibling-path from the token commitments (leaves) to the root. Express each node as an Element class.
-//   inputCommitments[0].siblingPath = await merkleTree.getSiblingPath(
-//     account,
-//     fTokenShieldInstance,
-//     inputCommitments[0].commitment,
-//     inputCommitments[0].commitmentIndex
-//   );
-//   inputCommitments[1].siblingPath = await merkleTree.getSiblingPath(
-//     account,
-//     fTokenShieldInstance,
-//     inputCommitments[1].commitment,
-//     inputCommitments[1].commitmentIndex
-//   );
+  // TODO: edit merkle-tree microservice API to accept 2 path requests at once, to avoid the possibility of the merkle-tree DB's root being updated between the 2 GET requests. Until then, we need to check that both paths share the same root with the below check:
+  if (
+    inputCommitments[0].siblingPath[0] !== inputCommitments[1].siblingPath[0]
+  ) {
+    throw new Error("The sibling paths don't share a common root.");
+  }
 
-//   // TODO: edit merkle-tree microservice API to accept 2 path requests at once, to avoid the possibility of the merkle-tree DB's root being updated between the 2 GET requests. Until then, we need to check that both paths share the same root with the below check:
-//   if (inputCommitments[0].siblingPath[0] !== inputCommitments[1].siblingPath[0])
-//     throw new Error("The sibling paths don't share a common root.");
+  const root = inputCommitments[0].siblingPath[0];
 
-//   const root = inputCommitments[0].siblingPath[0];
-//   // TODO: checkRoot() is not essential. It's only useful for debugging as we make iterative improvements to nightfall's zokrates files. Possibly delete in future.
-//   merkleTree.checkRoot(
-//     inputCommitments[0].commitment,
-//     inputCommitments[0].commitmentIndex,
-//     inputCommitments[0].siblingPath,
-//     root
-//   );
-//   merkleTree.checkRoot(
-//     inputCommitments[1].commitment,
-//     inputCommitments[1].commitmentIndex,
-//     inputCommitments[1].siblingPath,
-//     root
-//   );
+  inputCommitments[0].siblingPathElements = inputCommitments[0].siblingPath.map(
+    nodeValue =>
+      utils.toProofElement(nodeValue, "field", config.NODE_HASHLENGTH * 8, 1)
+  ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
 
-//   inputCommitments[0].siblingPathElements = inputCommitments[0].siblingPath.map(
-//     nodeValue => new Element(nodeValue, "field", config.NODE_HASHLENGTH * 8, 1)
-//   ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
+  inputCommitments[1].siblingPathElements = inputCommitments[1].siblingPath.map(
+    element =>
+      utils.toProofElement(element, "field", config.NODE_HASHLENGTH * 8, 1)
+  ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
 
-//   inputCommitments[1].siblingPathElements = inputCommitments[1].siblingPath.map(
-//     element => new Element(element, "field", config.NODE_HASHLENGTH * 8, 1)
-//   ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
+  console.log("Exisiting Proof Inputs:");
+  const p = config.ZOKRATES_PACKING_SIZE;
+  logProofInput(
+    "inputCommitments[0].amountHex",
+    inputCommitments[0].amountHex,
+    utils.hexToFieldPreserve(inputCommitments[0].amountHex, p)
+  );
+  logProofInput(
+    "inputCommitments[1].amountHex",
+    inputCommitments[1].amountHex,
+    utils.hexToFieldPreserve(inputCommitments[1].amountHex, p)
+  );
+  logProofInput(
+    "outputCommitments[0].amountHex",
+    outputCommitments[0].amountHex,
+    utils.hexToFieldPreserve(outputCommitments[0].amountHex, p)
+  );
+  logProofInput(
+    "outputCommitments[1].amountHex",
+    outputCommitments[1].amountHex,
+    utils.hexToFieldPreserve(outputCommitments[1].amountHex, p)
+  );
+  logProofInput(
+    "zkpPublicKeyReceiver",
+    zkpPublicKeyReceiver,
+    utils.hexToFieldPreserve(zkpPublicKeyReceiver, p)
+  );
+  logProofInput(
+    "inputCommitments[0].salt",
+    inputCommitments[0].salt,
+    utils.hexToFieldPreserve(inputCommitments[0].salt, p)
+  );
+  logProofInput(
+    "inputCommitments[1].salt",
+    inputCommitments[1].salt,
+    utils.hexToFieldPreserve(inputCommitments[1].salt, p)
+  );
+  logProofInput(
+    "outputCommitments[0].salt",
+    outputCommitments[0].salt,
+    utils.hexToFieldPreserve(outputCommitments[0].salt, p)
+  );
+  logProofInput(
+    "outputCommitments[1].salt",
+    outputCommitments[1].salt,
+    utils.hexToFieldPreserve(outputCommitments[1].salt, p)
+  );
+  logProofInput(
+    "zkpPrivateKeySender",
+    zkpPrivateKeySender,
+    utils.hexToFieldPreserve(zkpPrivateKeySender, p)
+  );
+  logProofInput(
+    "inputCommitments[0].commitment",
+    inputCommitments[0].commitment,
+    utils.hexToFieldPreserve(inputCommitments[0].commitment, p)
+  );
+  logProofInput(
+    "inputCommitments[1].commitment",
+    inputCommitments[1].commitment,
+    utils.hexToFieldPreserve(inputCommitments[1].commitment, p)
+  );
 
-//   // console logging:
-//   console.log("Existing Proof Variables:");
-//   const p = config.ZOKRATES_PACKING_SIZE;
-//   console.log(
-//     `inputCommitments[0].value: ${
-//       inputCommitments[0].value
-//     } : ${utils.hexToFieldPreserve(inputCommitments[0].value, p)}`
-//   );
-//   console.log(
-//     `inputCommitments[1].value: ${
-//       inputCommitments[1].value
-//     } : ${utils.hexToFieldPreserve(inputCommitments[1].value, p)}`
-//   );
-//   console.log(
-//     `outputCommitments[0].value: ${
-//       outputCommitments[0].value
-//     } : ${utils.hexToFieldPreserve(outputCommitments[0].value, p)}`
-//   );
-//   console.log(
-//     `outputCommitments[1].value: ${
-//       outputCommitments[1].value
-//     } : ${utils.hexToFieldPreserve(outputCommitments[1].value, p)}`
-//   );
-//   console.log(
-//     `receiverPublicKey: ${receiverZkpPublicKey} : ${utils.hexToFieldPreserve(
-//       receiverZkpPublicKey,
-//       p
-//     )}`
-//   );
-//   console.log(
-//     `inputCommitments[0].salt: ${
-//       inputCommitments[0].salt
-//     } : ${utils.hexToFieldPreserve(inputCommitments[0].salt, p)}`
-//   );
-//   console.log(
-//     `inputCommitments[1].salt: ${
-//       inputCommitments[1].salt
-//     } : ${utils.hexToFieldPreserve(inputCommitments[1].salt, p)}`
-//   );
-//   console.log(
-//     `outputCommitments[0].salt: ${
-//       outputCommitments[0].salt
-//     } : ${utils.hexToFieldPreserve(outputCommitments[0].salt, p)}`
-//   );
-//   console.log(
-//     `outputCommitments[1].salt: ${
-//       outputCommitments[1].salt
-//     } : ${utils.hexToFieldPreserve(outputCommitments[1].salt, p)}`
-//   );
-//   console.log(
-//     `senderSecretKey: ${senderZkpPrivateKey} : ${utils.hexToFieldPreserve(
-//       senderZkpPrivateKey,
-//       p
-//     )}`
-//   );
-//   console.log(
-//     `inputCommitments[0].commitment: ${
-//       inputCommitments[0].commitment
-//     } : ${utils.hexToFieldPreserve(inputCommitments[0].commitment, p)}`
-//   );
-//   console.log(
-//     `inputCommitments[1].commitment: ${
-//       inputCommitments[1].commitment
-//     } : ${utils.hexToFieldPreserve(inputCommitments[1].commitment, p)}`
-//   );
+  console.log("Generated Proof Inputs:");
+  logProofInput(
+    "inputCommitments[0].nullifier",
+    inputCommitments[0].nullifier,
+    utils.hexToFieldPreserve(inputCommitments[0].nullifier, p)
+  );
+  logProofInput(
+    "inputCommitments[1].nullifier",
+    inputCommitments[1].nullifier,
+    utils.hexToFieldPreserve(inputCommitments[1].nullifier, p)
+  );
+  logProofInput(
+    "outputCommitments[0].commitment",
+    outputCommitments[0].commitment,
+    utils.hexToFieldPreserve(outputCommitments[0].commitment, p)
+  );
+  logProofInput(
+    "outputCommitments[1].commitment",
+    outputCommitments[1].commitment,
+    utils.hexToFieldPreserve(outputCommitments[1].commitment, p)
+  );
+  logProofInput("root", root, utils.hexToFieldPreserve(root, p));
+  logProofInput(
+    "inputCommitments[0].siblingPath",
+    inputCommitments[0].siblingPath
+  );
+  logProofInput(
+    "inputCommitments[1].siblingPath",
+    inputCommitments[1].siblingPath
+  );
+  logProofInput(
+    "inputCommitments[0].commitmentIndex",
+    inputCommitments[0].commitmentIndex
+  );
+  logProofInput(
+    "inputCommitments[1].commitmentIndex",
+    inputCommitments[1].commitmentIndex
+  );
 
-//   console.log("New Proof Variables:");
-//   console.log(
-//     `pkA: ${senderPublicKey} : ${utils.hexToFieldPreserve(senderPublicKey, p)}`
-//   );
-//   console.log(
-//     `inputCommitments[0].nullifier: ${
-//       inputCommitments[0].nullifier
-//     } : ${utils.hexToFieldPreserve(inputCommitments[0].nullifier, p)}`
-//   );
-//   console.log(
-//     `inputCommitments[1].nullifier: ${
-//       inputCommitments[1].nullifier
-//     } : ${utils.hexToFieldPreserve(inputCommitments[1].nullifier, p)}`
-//   );
-//   console.log(
-//     `outputCommitments[0].commitment: ${
-//       outputCommitments[0].commitment
-//     } : ${utils.hexToFieldPreserve(outputCommitments[0].commitment, p)}`
-//   );
-//   console.log(
-//     `outputCommitments[1].commitment: ${
-//       outputCommitments[1].commitment
-//     } : ${utils.hexToFieldPreserve(outputCommitments[1].commitment, p)}`
-//   );
-//   console.log(`root: ${root} : ${utils.hexToFieldPreserve(root, p)}`);
-//   console.log(
-//     `inputCommitments[0].siblingPath:`,
-//     inputCommitments[0].siblingPath
-//   );
-//   console.log(
-//     `inputCommitments[1].siblingPath:`,
-//     inputCommitments[1].siblingPath
-//   );
-//   console.log(
-//     `inputCommitments[0].commitmentIndex:`,
-//     inputCommitments[0].commitmentIndex
-//   );
-//   console.log(
-//     `inputCommitments[1].commitmentIndex:`,
-//     inputCommitments[1].commitmentIndex
-//   );
+  const publicInputHash = utils.concatenateThenHash(
+    root,
+    inputCommitments[0].nullifier,
+    inputCommitments[1].nullifier,
+    outputCommitments[0].commitment,
+    outputCommitments[1].commitment
+  );
+  logProofInput(
+    "publicInputHash",
+    publicInputHash,
+    utils.hexToFieldPreserve(publicInputHash, 248, 1, 1)
+  );
 
-//   const publicInputHash = utils.concatenateThenHash(
-//     root,
-//     inputCommitments[0].nullifier,
-//     inputCommitments[1].nullifier,
-//     outputCommitments[0].commitment,
-//     outputCommitments[1].commitment
-//   );
-//   console.log(
-//     "publicInputHash:",
-//     publicInputHash,
-//     " : ",
-//     utils.hexToFieldPreserve(publicInputHash, 248, 1, 1)
-//   );
+  const allInputs = utils.formatInputsForZkSnark([
+    utils.toProofElement(publicInputHash, "field", 248, 1),
+    utils.toProofElement(inputCommitments[0].amountHex, "field", 128, 1),
+    utils.toProofElement(zkpPrivateKeySender, "field"),
+    utils.toProofElement(inputCommitments[0].salt, "field"),
+    ...inputCommitments[0].siblingPathElements.slice(1),
+    utils.toProofElement(inputCommitments[0].commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
+    utils.toProofElement(inputCommitments[1].amountHex, "field", 128, 1),
+    utils.toProofElement(inputCommitments[1].salt, "field"),
+    ...inputCommitments[1].siblingPathElements.slice(1),
+    utils.toProofElement(inputCommitments[1].commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
+    utils.toProofElement(inputCommitments[0].nullifier, "field"),
+    utils.toProofElement(inputCommitments[1].nullifier, "field"),
+    utils.toProofElement(outputCommitments[0].amountHex, "field", 128, 1),
+    utils.toProofElement(zkpPublicKeyReceiver, "field"),
+    utils.toProofElement(outputCommitments[0].salt, "field"),
+    utils.toProofElement(outputCommitments[0].commitment, "field"),
+    utils.toProofElement(outputCommitments[1].amountHex, "field", 128, 1),
+    utils.toProofElement(outputCommitments[1].salt, "field"),
+    utils.toProofElement(outputCommitments[1].commitment, "field"),
+    utils.toProofElement(root, "field")
+  ]);
 
-//   // compute the proof
-//   console.log("Computing witness...");
+  // console.log(
+  //   `zokrates compute-witness -a ${allInputs.join(" ")} -i zokrates/iou-transfer/out`
+  // );
 
-//   const allInputs = utils.formatInputsForZkSnark([
-//     new Element(publicInputHash, "field", 248, 1),
-//     new Element(inputCommitments[0].value, "field", 128, 1),
-//     new Element(senderZkpPrivateKey, "field"),
-//     new Element(inputCommitments[0].salt, "field"),
-//     ...inputCommitments[0].siblingPathElements.slice(1),
-//     new Element(inputCommitments[0].commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
-//     new Element(inputCommitments[1].value, "field", 128, 1),
-//     new Element(inputCommitments[1].salt, "field"),
-//     ...inputCommitments[1].siblingPathElements.slice(1),
-//     new Element(inputCommitments[1].commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
-//     new Element(inputCommitments[0].nullifier, "field"),
-//     new Element(inputCommitments[1].nullifier, "field"),
-//     new Element(outputCommitments[0].value, "field", 128, 1),
-//     new Element(receiverZkpPublicKey, "field"),
-//     new Element(outputCommitments[0].salt, "field"),
-//     new Element(outputCommitments[0].commitment, "field"),
-//     new Element(outputCommitments[1].value, "field", 128, 1),
-//     new Element(outputCommitments[1].salt, "field"),
-//     new Element(outputCommitments[1].commitment, "field"),
-//     new Element(root, "field")
-//   ]);
+  const transferInputDir = `${shell.pwd()}/zokrates/iou-transfer`;
 
-//   console.log(
-//     "To debug witness computation, use ./zok to run up a zokrates container then paste these arguments into the terminal:"
-//   );
-//   console.log(
-//     `./zokrates compute-witness -a ${allInputs.join(
-//       " "
-//     )} -i gm17/ft-transfer/out`
-//   );
+  console.time(durationLogLabel);
+  await zokrates.computeWitness(transferInputDir, allInputs);
+  console.timeEnd(durationLogLabel);
 
-//   await zokrates.computeWitness(
-//     codePath,
-//     outputDirectory,
-//     witnessName,
-//     allInputs
-//   );
+  console.time(durationLogLabel);
+  await zokrates.generateProof(transferInputDir);
+  console.timeEnd(durationLogLabel);
 
-//   console.log("Computing proof...");
-//   await zokrates.generateProof(
-//     pkPath,
-//     codePath,
-//     `${outputDirectory}/witness`,
-//     provingScheme,
-//     {
-//       createFile: createProofJson,
-//       directory: outputDirectory,
-//       fileName: proofName
-//     }
-//   );
+  let { proof } = JSON.parse(
+    readFileSync(`${transferInputDir}/iou-transfer-proof.json`)
+  );
 
-//   let { proof } = JSON.parse(
-//     fs.readFileSync(`${outputDirectory}/${proofName}`)
-//   );
+  proof = Object.values(proof);
+  // convert to flattened array:
+  proof = utils.flattenDeep(proof);
+  // convert to decimal, as the solidity functions expect uints
+  proof = proof.map(el => utils.hexToDec(el));
 
-//   proof = Object.values(proof);
-//   // convert to flattened array:
-//   proof = utils.flattenDeep(proof);
-//   // convert to decimal, as the solidity functions expect uints
-//   proof = proof.map(el => utils.hexToDec(el));
+  console.log("Transferring within the Shield contract");
 
-//   console.log("Transferring within the Shield contract");
+  const publicInputs = utils.formatInputsForZkSnark([
+    utils.toProofElement(publicInputHash, "field", 248, 1)
+  ]);
 
-//   const publicInputs = utils.formatInputsForZkSnark([
-//     new Element(publicInputHash, "field", 248, 1)
-//   ]);
+  console.log("Proof:");
+  console.log(proof);
+  console.log("PublicInputs:");
+  console.log(publicInputs);
 
-//   console.log("proof:");
-//   console.log(proof);
-//   console.log("publicInputs:");
-//   console.log(publicInputs);
+  // // Transfers commitment
+  // const txReceipt = await fTokenShieldInstance.transfer(
+  //   proof,
+  //   publicInputs,
+  //   root,
+  //   inputCommitments[0].nullifier,
+  //   inputCommitments[1].nullifier,
+  //   outputCommitments[0].commitment,
+  //   outputCommitments[1].commitment,
+  //   {
+  //     from: account,
+  //     gas: 6500000,
+  //     gasPrice: config.GASPRICE
+  //   }
+  // );
+  // utils.gasUsedStats(txReceipt, "transfer");
 
-//   // Transfers commitment
-//   const txReceipt = await fTokenShieldInstance.transfer(
-//     proof,
-//     publicInputs,
-//     root,
-//     inputCommitments[0].nullifier,
-//     inputCommitments[1].nullifier,
-//     outputCommitments[0].commitment,
-//     outputCommitments[1].commitment,
-//     {
-//       from: account,
-//       gas: 6500000,
-//       gasPrice: config.GASPRICE
-//     }
-//   );
-//   utils.gasUsedStats(txReceipt, "transfer");
+  // const newLeavesLog = txReceipt.logs.filter(log => {
+  //   return log.event === "NewLeaves";
+  // });
+  // // eslint-disable-next-line no-param-reassign
+  // outputCommitments[0].commitmentIndex = parseInt(
+  //   newLeavesLog[0].args.minLeafIndex,
+  //   10
+  // );
+  // // eslint-disable-next-line no-param-reassign
+  // outputCommitments[1].commitmentIndex =
+  //   outputCommitments[0].commitmentIndex + 1;
 
-//   const newLeavesLog = txReceipt.logs.filter(log => {
-//     return log.event === "NewLeaves";
-//   });
-//   // eslint-disable-next-line no-param-reassign
-//   outputCommitments[0].commitmentIndex = parseInt(
-//     newLeavesLog[0].args.minLeafIndex,
-//     10
-//   );
-//   // eslint-disable-next-line no-param-reassign
-//   outputCommitments[1].commitmentIndex =
-//     outputCommitments[0].commitmentIndex + 1;
+  // console.log("TRANSFER COMPLETE\n");
 
-//   console.log("TRANSFER COMPLETE\n");
-
-//   return {
-//     outputCommitments,
-//     txReceipt
-//   };
-// }
+  return {
+    inputCommitments,
+    outputCommitments,
+    proof,
+    publicInputs,
+    root
+  };
+}
 
 // /**
 // This function is the simple batch equivalent of fungible transfer.  It takes a single
