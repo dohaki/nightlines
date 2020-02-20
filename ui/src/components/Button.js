@@ -1,18 +1,24 @@
 import React from 'react';
 import { Button as RebassButton  } from "rebass";
 
+import LoadingSpinner from "./LoadingSpinner";
+
 export default function Button(props) {
   return (
     <RebassButton sx={{
-      ":hover": props.disabled
+      ":hover": props.loading
         ? {}
         : {
             bg: "secondary",
             cursor: "pointer"
           },
-      filter: props.disabled
+      filter: props.loading
         ? "grayscale(50%)"
         : "grayscale(0%)"
-    }} {...props} />
+    }} {...props}>
+      {props.loading ? (
+        <LoadingSpinner />
+      ) : props.children}
+    </RebassButton>
   )
 }
