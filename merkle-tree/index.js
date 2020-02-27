@@ -46,17 +46,16 @@ async function getSiblingPathByLeafIndex(shieldContractAddress, leafIndex) {
   const nodes = await nodesResponse.json();
 
   // Check whether some nodeIndices don't yet exist in the db. If they don't, we'll presume their values are zero, and add these to the 'nodes' before returning them.
-  const complementedNodes = siblingPathIndices.map((nodeIndex, i) => {
-    if (
-      typeof nodes[i] === "undefined" ||
-      nodes[i].nodeIndex !== siblingPathIndices[i]
-    ) {
-      return {
+  const complementedNodes = siblingPathIndices.map(siblingNodeIndex => {
+    const nodeInDB = nodes.find(
+      ({ nodeIndex }) => siblingNodeIndex === nodeIndex
+    );
+    return (
+      nodeInDB || {
         value: ethers.constants.HashZero,
-        nodeIndex
-      };
-    }
-    return nodes[i];
+        nodeIndex: siblingNodeIndex
+      }
+    );
   });
   return complementedNodes;
 }

@@ -50,10 +50,10 @@ export default function Login() {
       </Box>
       <Button
         onClick={handleClick}
-        disabled={loading}
+        loading={loading}
         minWidth={200}
       >
-        {loading ? "Loading..." : "Let's Go"}
+        Let's Go
       </Button>
     </Container>
   )

@@ -13,6 +13,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.options("*", cors());
 
 /**
  * @example
@@ -87,7 +88,7 @@ app.post("/mint-iou-commitment", async (req, res) => {
     const { amount, zkpPublicKey, salt } = req.body;
     // TODO: Validate params
     const { commitment, proof, publicInputs } = await iou.mint(
-      utils.decToPaddedHex(String(amount), 32),
+      amount,
       zkpPublicKey,
       salt
     );
@@ -103,6 +104,68 @@ app.post("/mint-iou-commitment", async (req, res) => {
     res.status(500).json(error);
   }
 });
+
+// cache proofs that take long to generate
+const proofCache = {};
+
+async function generateTransferProof(proofCacheKey, ...proofArgs) {
+  const proofObject = await iou.transfer(
+    ...proofArgs
+  );
+  proofCache[proofCacheKey] = proofObject;
+}
+
+app.post("/transfer-iou-commitment", async (req, res) => {
+  try {
+    const {
+      shieldAddress,
+      inputCommitments,
+      outputCommitments,
+      zkpPublicKeyReceiver,
+      zkpPrivateKeySender
+    } = req.body;
+    // TODO: Validate params
+
+    // Only for demo purposes
+    const proofCacheKey = utils.concatenateThenHash(
+      inputCommitments[0].commitmentIndex,
+      inputCommitments[1].commitmentIndex,
+      outputCommitments[0].amount.raw,
+      outputCommitments[1].amount.raw
+    );
+
+    if (proofCache[proofCacheKey]) {
+      res.json(proofCache[proofCacheKey]);
+    } else {
+      generateTransferProof(
+        proofCacheKey,
+        shieldAddress,
+        inputCommitments,
+        outputCommitments,
+        zkpPublicKeyReceiver,
+        zkpPrivateKeySender
+      );
+      res.json(proofCacheKey);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+});
+
+app.get("/transfer-proof/:cacheKey", (req, res) => {
+  try {
+    const { cacheKey } = req.params;
+    if (proofCache[cacheKey]) {
+      res.json(proofCache[cacheKey])
+    } else {
+      res.json(cacheKey);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+})
 
 // MERKLE TREE
 
@@ -134,6 +197,8 @@ app.get("/sibling-path", async (req, res) => {
 
 function start() {
   app.listen(config.NIGHTLINES_PORT);
+  // server.timeout = 100000;
+  // server.keepAliveTimeout = 100000;
   console.log(
     `Nightlines server started. http://127.0.0.1:${config.NIGHTLINES_PORT}`
   );

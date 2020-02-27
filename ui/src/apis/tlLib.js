@@ -126,6 +126,13 @@ export async function getNewLeafEvents(shieldAddress, fromBlock = 0) {
   return events;
 }
 
+export async function getNewLeavesEvents(shieldAddress, fromBlock = 0) {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/shields/${shieldAddress}/events?type=NewLeaves&fromBlock=${fromBlock}`);
+  const events = await response.json();
+  return events;
+}
+
+
 export async function getRegisteredVK(
   shieldAddress,
   vkType
@@ -227,6 +234,79 @@ export async function mintCommitment(
       byShieldContract: get(gasUsed, "byShieldContract"),
       byCurrencyNetworkContract: get(gasUsed, "byCurrencyNetworkContract"),
     }
+  }
+}
+
+export async function transferCommitment(
+  shieldAddress,
+  proof,
+  inputs,
+  nullifierC,
+  nullifierD,
+  commitmentE,
+  commitmentF
+) {
+  const transferTx = await tlNetwork.shield.prepareTransferCommitment(
+    shieldAddress,
+    proof,
+    inputs,
+    nullifierC,
+    nullifierD,
+    commitmentE,
+    commitmentF,
+    {
+      gasLimit: "2000000"
+    }
+  );
+  const transferTxHash = await confirmTx(transferTx.rawTx);
+  
+  await wait();
+
+  const latestBlocknumber = await getLatesBlocknumber();
+
+  // Add information on used gas for statistics
+  const gasUsed = await getGasUsedForTx(shieldAddress, transferTxHash, latestBlocknumber);
+  
+  const newLeavesEvents = await getNewLeavesEvents(shieldAddress, latestBlocknumber);
+  const relevantEvent = newLeavesEvents.find(({ transactionId }) => transactionId === transferTxHash);
+
+  if (!relevantEvent) {
+    throw new Error("No NewLeaves event thrown while transferring")
+  }
+
+  const minLeafIndex = relevantEvent.leafValues.minLeafIndex;
+  const indexE = minLeafIndex + relevantEvent.leafValues.indexOf(commitmentE);
+  const indexF = minLeafIndex + relevantEvent.leafValues.indexOf(commitmentF);
+
+  const noteE = {
+    txHash: transferTxHash,
+    type: "transfer",
+    commitment: commitmentE,
+    commitmentIndex: indexE,
+    gasUsed: {
+      byVerifierContract: get(gasUsed, "byVerifierContract"),
+      byShieldContract: get(gasUsed, "byShieldContract"),
+      byCurrencyNetworkContract: get(gasUsed, "byCurrencyNetworkContract"), 
+    },
+    status: "sent",
+  }
+
+  const noteF = {
+    txHash: transferTxHash,
+    type: "transfer",
+    commitment: commitmentF,
+    commitmentIndex: indexF,
+    gasUsed: {
+      byVerifierContract: get(gasUsed, "byVerifierContract"),
+      byShieldContract: get(gasUsed, "byShieldContract"),
+      byCurrencyNetworkContract: get(gasUsed, "byCurrencyNetworkContract"), 
+    },
+    status: "unspent",
+  }
+
+  return {
+    noteE,
+    noteF
   }
 }
 

@@ -3,7 +3,7 @@ import { Text, Flex } from "rebass";
 import { get } from "lodash";
 
 import DashboardCard from "./DashboardCard";
-import TruncatedText from "./TruncatedText";
+import Commitment from "./Commitment";
 
 import store from "../store";
 
@@ -25,23 +25,26 @@ export default function CommitmentsCard() {
     // eslint-disable-next-line
   }, [username]);
 
-  const { unspentCommitments, spentCommitments } = commitments.reduce((filteredCommitments, commitment) => {
-    if (commitment.spent) {
+  const { unspentCommitments, spentCommitments, sentCommitments } = commitments.reduce((filteredCommitments, commitment) => {
+    if (commitment.status === "spent") {
       filteredCommitments.spentCommitments.push(commitment);
-    } else {
+    } else if (commitment.status === "unspent") {
       filteredCommitments.unspentCommitments.push(commitment);
+    } else if (commitment.status === "sent") {
+      filteredCommitments.sentCommitments.push(commitment);
     }
     return filteredCommitments;
   }, {
     unspentCommitments: [],
-    spentCommitments: []
+    spentCommitments: [],
+    sentCommitments: []
   });
 
   const spendable = unspentCommitments.reduce((acc, commitment) => {
     return acc + Number(get(commitment, "amount.value", 0))
   }, 0);
 
-  console.log({ unspentCommitments, spentCommitments })
+  console.log({ unspentCommitments, spentCommitments, sentCommitments })
 
   return (
     <DashboardCard>
@@ -75,44 +78,16 @@ export default function CommitmentsCard() {
           Amount
         </Text>
       </Flex>
-      {commitments.map((commitment, i) => (
-        <Flex key={i} justifyContent={"space-between"}>
-          <TruncatedText
-            width={128}
-            lineThrough={commitment.spent}
-          >
-            {commitment.commitment}
-          </TruncatedText>
-          <TruncatedText
-            width={128}
-            color={"primary"}
-            lineThrough={commitment.spent}
-          >
-            {commitment.salt}
-          </TruncatedText>
-          <TruncatedText
-            width={64}
-            textAlign={"center"}
-            lineThrough={commitment.spent}
-          >
-            {commitment.commitmentIndex}
-          </TruncatedText>
-          <TruncatedText
-            width={64}
-            textAlign={"center"}
-            lineThrough={commitment.spent}
-          >
-            {commitment.type}
-          </TruncatedText>
-          <TruncatedText
-            width={64}
-            textAlign={"center"}
-            color={commitment.type === "transfer" && "primary"}
-            lineThrough={commitment.spent}
-          >
-            {commitment.amount.value}
-          </TruncatedText>
-        </Flex>
+      {unspentCommitments.map((commitment, i) => (
+        <Commitment commitment={commitment} key={i} />
+      ))}
+      <Flex />
+      {spentCommitments.map((commitment, i) => (
+        <Commitment commitment={commitment} key={i} />
+      ))}
+      <Flex />
+      {sentCommitments.map((commitment, i) => (
+        <Commitment commitment={commitment} key={i} />
       ))}
     </DashboardCard>
   )

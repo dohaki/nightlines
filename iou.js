@@ -29,7 +29,9 @@ function logProofInput(name, hexOrValue, number) {
     );
   } else {
     console.log("  " + name);
-    console.log("    " + hexOrValue);
+    console.log(
+      Array.isArray(hexOrValue) ? hexOrValue : "    " + chalk.green(hexOrValue)
+    );
   }
 }
 
@@ -218,12 +220,22 @@ export async function transfer(
 
   inputCommitments[0].siblingPathElements = inputCommitments[0].siblingPath.map(
     nodeValue =>
-      utils.toProofElement(nodeValue, "field", config.NODE_HASHLENGTH * 8, 1)
+      utils.toProofElement(
+        nodeValue,
+        "field",
+        config.MERKLE_TREE_NODE_HASHLENGTH * 8,
+        1
+      )
   ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
 
   inputCommitments[1].siblingPathElements = inputCommitments[1].siblingPath.map(
     element =>
-      utils.toProofElement(element, "field", config.NODE_HASHLENGTH * 8, 1)
+      utils.toProofElement(
+        element,
+        "field",
+        config.MERKLE_TREE_NODE_HASHLENGTH * 8,
+        1
+      )
   ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
 
   console.log("Exisiting Proof Inputs:");
@@ -365,7 +377,9 @@ export async function transfer(
   ]);
 
   // console.log(
-  //   `zokrates compute-witness -a ${allInputs.join(" ")} -i zokrates/iou-transfer/out`
+  //   `zokrates compute-witness -a ${allInputs.join(
+  //     " "
+  //   )} -i zokrates/iou-transfer/iou-transfer-out`
   // );
 
   const transferInputDir = `${shell.pwd()}/zokrates/iou-transfer`;
@@ -387,8 +401,6 @@ export async function transfer(
   proof = utils.flattenDeep(proof);
   // convert to decimal, as the solidity functions expect uints
   proof = proof.map(el => utils.hexToDec(el));
-
-  console.log("Transferring within the Shield contract");
 
   const publicInputs = utils.formatInputsForZkSnark([
     utils.toProofElement(publicInputHash, "field", 248, 1)
@@ -538,7 +550,7 @@ export async function transfer(
 //   );
 
 //   inputCommitment.siblingPathElements = inputCommitment.siblingPath.map(
-//     nodeValue => new Element(nodeValue, "field", config.NODE_HASHLENGTH * 8, 1)
+//     nodeValue => new Element(nodeValue, "field", config.MERKLE_TREE_NODE_HASHLENGTH * 8, 1)
 //   ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
 
 //   const publicInputHash = utils.concatenateThenHash(
@@ -714,7 +726,7 @@ export async function transfer(
 //   merkleTree.checkRoot(commitment, commitmentIndex, siblingPath, root);
 
 //   const siblingPathElements = siblingPath.map(
-//     nodeValue => new Element(nodeValue, "field", config.NODE_HASHLENGTH * 8, 1)
+//     nodeValue => new Element(nodeValue, "field", config.MERKLE_TREE_NODE_HASHLENGTH * 8, 1)
 //   ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
 
 //   // Summarise values in the console:

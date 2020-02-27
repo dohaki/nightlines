@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import * as tlUtils from "trustlines-clientlib/lib-esm/utils";
 
 import Button from "./Button";
+import LoadingSpinner from "./LoadingSpinner";
 
 import store from "../store";
 
@@ -28,24 +29,46 @@ const getJoinSplitInputs = (commitments, valueRaw) => {
   return [];
 }
 
+const getJoinSplitOutputs = async (inputCommitments, transferValueRaw, decimals) => {
+  const salts = await Promise.all([
+    nightlines.getRandomSalt(),
+    nightlines.getRandomSalt()
+  ]);
+  const totalInputValuesRaw = Number(inputCommitments[0].amount.raw) + Number(inputCommitments[1].amount.raw);
+
+  return [
+    {
+      salt: salts[0],
+      amount: tlUtils.formatToAmount(transferValueRaw, decimals)
+    },
+    {
+      salt: salts[1],
+      amount: tlUtils.formatToAmount(
+        totalInputValuesRaw - Number(transferValueRaw),
+        decimals
+      )
+    }
+  ]
+}
+
 export default function Transfer() {
   const [receiverPK, setReceiverPK] = useState("");
   const [transferValue, setTransferValue] = useState(0);
   const [isVKRegistered, setVKRegistered] = useState(false);
+  const [proofOrKey, setProofOrKey] = useState();
   const [loading, setLoading] = useState(false);
   const {
     selectedNetwork,
     loadedUser,
-    fetchOverview,
     fetchCommitments,
     commitments
   } = store.useContainer();
 
   const shieldAddress = get(selectedNetwork, "shield.address");
   const iouAbbreviation = get(selectedNetwork, "abbreviation");
-  const iouAddress = get(selectedNetwork, "address");
-  const userAddress = get(loadedUser, "walletData.address");
   const username = get(loadedUser, "username");
+  const zkpPublicKey = get(loadedUser, "zkpKeyPair.zkpPublicKey");
+  const zkpPrivateKey = get(loadedUser, "zkpKeyPair.zkpPrivateKey");
 
   useEffect(() => {
     async function getRegisteredTransferVK() {
@@ -61,6 +84,75 @@ export default function Transfer() {
     }
   }, [shieldAddress, setVKRegistered]);
 
+  useEffect(() => {
+    if (typeof proofOrKey === "string") {
+      const intervalId = setInterval(() => {
+        nightlines.getTransferProofByKey(proofOrKey)
+          .then(proof => {
+            setProofOrKey(proof);
+          })
+          .catch(e => toast(e.toString()))
+      }, 5000);
+      return () => clearInterval(intervalId);
+    } else if (typeof proofOrKey === "object") {
+      tlLib.transferCommitment(
+        shieldAddress,
+        proofOrKey.proof,
+        proofOrKey.inputs,
+        proofOrKey.inputCommitments[0].nullifier,
+        proofOrKey.inputCommitments[1].nullifier,
+        proofOrKey.outputCommitments[0].commitment,
+        proofOrKey.outputCommitments[1].commitment,
+      ).then(async ({ noteE, noteF }) => {
+        await Promise.all([
+          localforage.setCommitmentStatus(
+            username,
+            proofOrKey.inputCommitments[0].commitment,
+            "spent"
+          ),
+          localforage.setCommitmentStatus(
+            username,
+            proofOrKey.inputCommitments[1].commitment,
+            "spent"
+          ),
+          // commitment E
+          localforage.setCommitment(
+            username,
+            {
+              shieldAddress,
+              zkpPublicKey: receiverPK,
+              commitment: noteE.commitment,
+              commitmentIndex: noteE.commitmentIndex,
+              salt: proofOrKey.outputCommitments[0].salt,
+              amount: proofOrKey.outputCommitments[0].amount,
+              type: "transfer",
+              gasUsed: proofOrKey.outputCommitments[0].gasUsed,
+              status: "sent",
+            }
+          ),
+          // commitment F
+          localforage.setCommitment(
+            username,
+            {
+              shieldAddress,
+              zkpPublicKey,
+              commitment: noteF.commitment,
+              commitmentIndex: noteF.commitmentIndex,
+              salt: proofOrKey.outputCommitments[1].salt,
+              amount: proofOrKey.outputCommitments[1].amount,
+              type: "transfer",
+              gasUsed: proofOrKey.outputCommitments[1].gasUsed,
+            }
+          )
+        ]);
+        fetchCommitments(username);
+        setReceiverPK("");
+        setTransferValue(0);
+      }).catch(e => toast(e.toString()));
+    }
+  }, [proofOrKey])
+
+
   const handleClick = async () => {
     try {
       setLoading(true);
@@ -69,53 +161,36 @@ export default function Transfer() {
 
       const joinSplitInputs = getJoinSplitInputs(commitments, transferValueRaw);
 
-      console.log({ joinSplitInputs });
-
       if (joinSplitInputs.length === 0) {
-        throw new Error("Insufficient commitment minted");
+        throw new Error("Insufficient commitments minted");
       }
-      // const randomSalt = await nightlines.getRandomSalt();
-      // const mintProof = await nightlines.getMintProof(
-      //   transferValueRaw,
-      //   get(loadedUser, "zkpKeyPair.zkpPublicKey"),
-      //   randomSalt
-      // );
-      // toast(`Proof generated for commitment: ${mintProof.commitment}`, { type: "info" });
-      // console.log(mintProof)
 
-      // const mintCommitment = await tlLib.mintCommitment(
-      //   shieldAddress,
-      //   mintProof.proof,
-      //   mintProof.publicInputs,
-      //   mintValue,
-      //   mintProof.commitment
-      // );
+      // set status of used input commitments to PENDING
+      await Promise.all(
+        joinSplitInputs.map(input =>
+          localforage.setCommitmentStatus(username, input, localforage.status.PENDING)
+          )
+      )
 
-      // const storedCommitment = await localforage.setCommitment(
-      //   username,
-      //   {
-      //     shieldAddress,
-      //     commitmentIndex: mintCommitment.commitmentIndex,
-      //     commitment: mintProof.commitment,
-      //     salt: randomSalt,
-      //     amount: {
-      //       value: mintValue,
-      //       raw: transferValueRaw,
-      //       decimals
-      //     },
-      //     type: "mint",
-      //     gasUsed: mintCommitment.gasUsed
-      //   }
-      // );
-      // console.log("Stored commitment: ", storedCommitment);
-      // toast("Successfully minted commitment", { type: "success" });
-      // fetchOverview(iouAddress, userAddress);
-      // fetchCommitments(username);
-      setTransferValue(0);
+      const joinSplitOutputs = await getJoinSplitOutputs(
+        joinSplitInputs,
+        transferValueRaw,
+        decimals
+      );
+
+
+      const transferProofOrKey = await nightlines.getTransferProof(
+        shieldAddress,
+        joinSplitInputs,
+        joinSplitOutputs,
+        receiverPK,
+        zkpPrivateKey
+      );
+
+      setProofOrKey(transferProofOrKey);
     } catch (error) {
+      console.error(error);
       toast(error.toString(), { type: "error" });
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -163,13 +238,11 @@ export default function Transfer() {
             Register VK
           </Text>
           <Button
-            disabled={loading}
+            loading={loading}
             onClick={handleClick}
             minWidth={150}
           >
-            {loading ? (
-              "Transferring"
-            ) : "Transfer"}
+            Transfer
           </Button>
         </Box>
       </Flex>

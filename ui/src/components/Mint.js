@@ -129,13 +129,11 @@ export default function Mint() {
           Register VK
         </Text>
         <Button
-          disabled={loading}
+          loading={loading}
           onClick={handleClick}
           minWidth={150}
         >
-          {loading ? (
-            "Minting..."
-          ) : "Mint"}
+          Mint
         </Button>
       </Box>
     </Flex>

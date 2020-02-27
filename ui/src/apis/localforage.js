@@ -1,5 +1,11 @@
 import localforage from "localforage";
 
+export const status = {
+  UNSPENT: "unspent",
+  SPENT: "spent",
+  PENDING: "pending",
+}
+
 /**
  * 
  * @param {string} name 
@@ -44,7 +50,8 @@ export async function setCommitment(
     amount,
     type,
     salt,
-    gasUsed
+    gasUsed,
+    status = status.UNSPENT
   }
 ) {
   const instance = createInstance(username);
@@ -55,7 +62,8 @@ export async function setCommitment(
     amount,
     type,
     salt,
-    gasUsed
+    gasUsed,
+    status
   });
 }
 
@@ -67,4 +75,13 @@ export async function getCommitmentsByUsername(username) {
     commitments.push(value);
   });
   return commitments;
+}
+
+export async function setCommitmentStatus(username, commitment, status) {
+  const instance = createInstance(username);
+  const note = await instance.getItem(commitment);
+  return instance.setItem(commitment, {
+    ...note,
+    status
+  });
 }

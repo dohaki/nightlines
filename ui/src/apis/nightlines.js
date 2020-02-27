@@ -41,6 +41,37 @@ export async function getMintProof(
   return proof;
 }
 
+export async function getTransferProof(
+  shieldAddress,
+  inputCommitments,
+  outputCommitments,
+  zkpPublicKeyReceiver,
+  zkpPrivateKeySender
+) {
+  const response = await fetch(`${NIGHTLINES_URL}/transfer-iou-commitment`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      shieldAddress,
+      inputCommitments,
+      outputCommitments,
+      zkpPublicKeyReceiver,
+      zkpPrivateKeySender
+    })
+  });
+  const proof = await response.json();
+  return proof;
+}
+
+export async function getTransferProofByKey(proofKey) {
+  const response = await fetch(`${NIGHTLINES_URL}/transfer-proof/${proofKey}`);
+  const key = await response.json();
+  return key;
+}
+
+
 export async function getLeafByLeafIndex(
   shieldAddress,
   leafIndex
