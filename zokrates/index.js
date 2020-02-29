@@ -12,8 +12,8 @@ const PROVING_SCHEME = "gm17";
 
 // TODO: Make generic
 export function getZokratesInputDirAndFilePaths() {
-  // const dirNames = ["iou-burn", "iou-mint", "iou-transfer"];
-  const dirNames = ["iou-transfer"];
+  const dirNames = ["iou-burn", "iou-mint", "iou-transfer"];
+  // const dirNames = ["iou-transfer"];
   return dirNames.map(dirName => {
     const dirPath = `${shell.pwd().stdout}/zokrates/${dirName}`;
     // Assuming same input file name as input dir name for now
@@ -47,18 +47,16 @@ export function compileZokratesCode(inputFilePath) {
   requireZokrates();
 
   const { inputFileDirPath, inputFileName } = getFileNameAndDir(inputFilePath);
+  const outputFileName = `${inputFileName}-out`;
 
   log(`Compiling '${inputFileName}.zok'...`);
   const { stdout, stderr } = shell.exec(
-    `zokrates compile -i ${inputFilePath} -o /${inputFileDirPath}/${inputFileName}-out`,
-    {
-      silent: true
-    }
+    `zokrates compile --light -i ${inputFilePath} -o ${inputFileDirPath}/${outputFileName}`
   );
 
   checkIfZokratesError(stdout, stderr, "Compilation failed.");
 
-  log(`Compilation successful. Written to '${inputFileName}-out'.`);
+  log(`Compilation successful. Compiled code written to '${outputFileName}'.`);
   return stdout;
 }
 
@@ -86,6 +84,7 @@ export async function generateTrustedSetup(inputDirPath) {
       "zokrates",
       [
         "setup",
+        "--light",
         "-i",
         compiledInputFilePath,
         "-s",
