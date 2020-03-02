@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { readFileSync } from "fs";
 import shell from "shelljs";
+import WebSocket from "ws";
 
 import * as iou from "./iou.js";
 import * as utils from "./utils.js";
@@ -13,7 +14,21 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.options("*", cors());
+
+const wss = new WebSocket.Server({
+  server: app,
+  port: config.NIGHTLINES_WS_PORT
+});
+
+wss.on("connection", ws => {
+  ws.on("open", () => {
+    console.log("[WS] Client connected");
+  });
+
+  ws.on("close", () => {
+    console.log("[WS] Client disconnected");
+  });
+});
 
 /**
  * @example
@@ -109,10 +124,16 @@ app.post("/mint-iou-commitment", async (req, res) => {
 const proofCache = {};
 
 async function generateTransferProof(proofCacheKey, ...proofArgs) {
-  const proofObject = await iou.transfer(
-    ...proofArgs
-  );
+  const proofObject = await iou.transfer(...proofArgs);
   proofCache[proofCacheKey] = proofObject;
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send({
+        proof: proofObject,
+        proofKey: proofCacheKey
+      });
+    }
+  });
 }
 
 app.post("/transfer-iou-commitment", async (req, res) => {
@@ -128,10 +149,10 @@ app.post("/transfer-iou-commitment", async (req, res) => {
 
     // Only for demo purposes
     const proofCacheKey = utils.concatenateThenHash(
-      inputCommitments[0].commitmentIndex,
-      inputCommitments[1].commitmentIndex,
-      outputCommitments[0].amount.raw,
-      outputCommitments[1].amount.raw
+      utils.decToHex(inputCommitments[0].commitmentIndex),
+      utils.decToHex(inputCommitments[1].commitmentIndex),
+      utils.decToHex(outputCommitments[0].amount.raw),
+      utils.decToHex(outputCommitments[1].amount.raw)
     );
 
     if (proofCache[proofCacheKey]) {
@@ -157,7 +178,7 @@ app.get("/transfer-proof/:cacheKey", (req, res) => {
   try {
     const { cacheKey } = req.params;
     if (proofCache[cacheKey]) {
-      res.json(proofCache[cacheKey])
+      res.json(proofCache[cacheKey]);
     } else {
       res.json(cacheKey);
     }
@@ -165,7 +186,7 @@ app.get("/transfer-proof/:cacheKey", (req, res) => {
     console.log(error);
     res.status(500).json(error);
   }
-})
+});
 
 // MERKLE TREE
 
