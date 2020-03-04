@@ -4,7 +4,7 @@ export default function useWebSocket() {
   const [webSocket, setWebSocket] = useState();
 
   function createWebSocket() {
-    const ws = new WebSocket("http://localhost:3002");
+    const ws = new WebSocket("ws://localhost:3002");
     setWebSocket(ws);
   }
 
@@ -17,5 +17,3 @@ export default function useWebSocket() {
 
   return { webSocket, createWebSocket, closeWebSocket };
 }
-
-ws
