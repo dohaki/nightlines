@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Nightlines UI",
+  "name": "Demo UI for showcasing Nightlines",
   "icons": [
     {
       "src": "favicon.ico",
