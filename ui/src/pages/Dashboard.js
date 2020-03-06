@@ -46,6 +46,7 @@ export default function Dashboard() {
   useEffect(() => {
     createWebSocket();
     return () => closeWebSocket();
+    // eslint-disable-next-line
   }, [])
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, Flex, Box } from "rebass";
 import { Input } from "@rebass/forms";
 import { get } from "lodash";
@@ -17,7 +17,6 @@ const getJoinSplitInputs = (commitments, valueRaw) => {
   const unspentCommitments = commitments.filter(({ status }) => status === "unspent");
   for (const [i, commitment] of unspentCommitments.entries()) {
     const delta = Number(valueRaw) - Number(commitment.amount.raw);
-    console.log({ delta })
 
     const secondInput = unspentCommitments
       .slice(i + 1, unspentCommitments.length)
@@ -98,15 +97,15 @@ export default function Transfer() {
       }
 
       // set status of used input commitments to PENDING
-      await Promise.all(
-        joinSplitInputs.map(input =>
-          localforage.setCommitmentStatus(
-            username,
-            input.commitment,
-            localforage.COMMITMENT_STATUS.PENDING
-          )
-        )
-      )
+      // await Promise.all(
+      //   joinSplitInputs.map(input =>
+      //     localforage.setCommitmentStatus(
+      //       username,
+      //       input.commitment,
+      //       localforage.COMMITMENT_STATUS.PENDING
+      //     )
+      //   )
+      // )
 
       const joinSplitOutputs = await getJoinSplitOutputs(
         joinSplitInputs,

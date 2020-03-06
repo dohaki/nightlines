@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Text, Flex, Box } from "rebass";
 import { Input } from "@rebass/forms";
 import { get } from "lodash";
-import { FiLoader } from "react-icons/fi";
 import { toast } from 'react-toastify';
 
 import DashboardCard from "./DashboardCard";

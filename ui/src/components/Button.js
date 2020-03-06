@@ -3,20 +3,20 @@ import { Button as RebassButton  } from "rebass";
 
 import LoadingSpinner from "./LoadingSpinner";
 
-export default function Button(props) {
+export default function Button({ loading = false, ...props }) {
   return (
     <RebassButton sx={{
-      ":hover": props.loading
+      ":hover": loading
         ? {}
         : {
             bg: "secondary",
             cursor: "pointer"
           },
-      filter: props.loading
+      filter: loading
         ? "grayscale(50%)"
         : "grayscale(0%)"
     }} {...props}>
-      {props.loading ? (
+      {loading ? (
         <LoadingSpinner />
       ) : props.children}
     </RebassButton>

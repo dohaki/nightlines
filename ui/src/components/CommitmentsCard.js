@@ -50,7 +50,7 @@ export default function CommitmentsCard() {
     }
     webSocket.addEventListener("message", handleReceiveTransfer)
     return () => webSocket.removeEventListener("message", handleReceiveTransfer)
-  }, [webSocket])
+  }, [webSocket, zkpPublicKey, username, fetchCommitments])
 
   const { unspentCommitments, spentCommitments, sentCommitments } = commitments.reduce((filteredCommitments, commitment) => {
     if (commitment.status === "spent" || commitment.status === "pending") {
@@ -93,7 +93,7 @@ export default function CommitmentsCard() {
             id='own'
             value='own'
             checked={filter === 'own'}
-            onClick={() => setFilter('own')}
+            onChange={() => setFilter('own')}
           />
           Own notes
         </Label>
@@ -103,7 +103,7 @@ export default function CommitmentsCard() {
             id='sent'
             value='sent'
             checked={filter === 'sent'}
-            onClick={() => setFilter('sent')}
+            onChange={() => setFilter('sent')}
           />
           Sent notes
         </Label>
