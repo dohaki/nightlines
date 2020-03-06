@@ -6,6 +6,8 @@ import { Label, Radio } from '@rebass/forms'
 import DashboardCard from "./DashboardCard";
 import Commitment from "./Commitment";
 
+import * as localforage from "../apis/localforage";
+
 import store from "../store";
 
 export default function CommitmentsCard() {
@@ -14,10 +16,12 @@ export default function CommitmentsCard() {
     commitments,
     fetchCommitments,
     loadedUser,
-    selectedNetwork
+    selectedNetwork,
+    webSocket
   } = store.useContainer();
 
   const username = get(loadedUser, "username");
+  const zkpPublicKey = get(loadedUser, "zkpKeyPair.zkpPublicKey");
   const iouAbbreviation = get(selectedNetwork, "abbreviation");
 
   useEffect(() => {
@@ -26,6 +30,27 @@ export default function CommitmentsCard() {
     }
     // eslint-disable-next-line
   }, [username]);
+
+  useEffect(() => {
+    function handleReceiveTransfer(event) {
+      const data = JSON.parse(event.data)
+      if (
+        data.type === "transfer" &&
+        data.zkpPublicKey === zkpPublicKey
+      ) {
+        localforage.setCommitment(
+          username,
+          {
+            ...data,
+            status: 'unspent'
+          }
+        )
+        fetchCommitments(username)
+      }
+    }
+    webSocket.addEventListener("message", handleReceiveTransfer)
+    return () => webSocket.removeEventListener("message", handleReceiveTransfer)
+  }, [webSocket])
 
   const { unspentCommitments, spentCommitments, sentCommitments } = commitments.reduce((filteredCommitments, commitment) => {
     if (commitment.status === "spent" || commitment.status === "pending") {

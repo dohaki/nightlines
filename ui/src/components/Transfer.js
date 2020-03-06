@@ -17,6 +17,7 @@ const getJoinSplitInputs = (commitments, valueRaw) => {
   const unspentCommitments = commitments.filter(({ status }) => status === "unspent");
   for (const [i, commitment] of unspentCommitments.entries()) {
     const delta = Number(valueRaw) - Number(commitment.amount.raw);
+    console.log({ delta })
 
     const secondInput = unspentCommitments
       .slice(i + 1, unspentCommitments.length)
@@ -92,7 +93,7 @@ export default function Transfer() {
 
       const joinSplitInputs = getJoinSplitInputs(commitments, transferValueRaw);
 
-      if (joinSplitInputs.length === 0) {
+      if (joinSplitInputs.length < 2) {
         throw new Error("Insufficient commitments minted");
       }
 
@@ -149,6 +150,17 @@ export default function Transfer() {
       proof.outputCommitments[0].commitment,
       proof.outputCommitments[1].commitment,
     );
+    const commitmentE = {
+      shieldAddress,
+      zkpPublicKey: receiverPK,
+      commitment: noteE.commitment,
+      commitmentIndex: noteE.commitmentIndex,
+      salt: proof.outputCommitments[0].salt,
+      amount: proof.outputCommitments[0].amount,
+      type: "transfer",
+      gasUsed: noteE.gasUsed,
+      status: "sent",
+    }
     await Promise.all([
       localforage.setCommitmentStatus(
         username,
@@ -163,17 +175,7 @@ export default function Transfer() {
       // commitment E
       localforage.setCommitment(
         username,
-        {
-          shieldAddress,
-          zkpPublicKey: receiverPK,
-          commitment: noteE.commitment,
-          commitmentIndex: noteE.commitmentIndex,
-          salt: proof.outputCommitments[0].salt,
-          amount: proof.outputCommitments[0].amount,
-          type: "transfer",
-          gasUsed: noteE.gasUsed,
-          status: "sent",
-        }
+        commitmentE
       ),
       // commitment F
       localforage.setCommitment(
@@ -195,6 +197,7 @@ export default function Transfer() {
     setReceiverPK("");
     setTransferValue(0);
     setLoading(false);
+    webSocket.send(JSON.stringify(commitmentE))
   }
 
   const handleRegisterVK = async () => {

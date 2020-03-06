@@ -4,12 +4,25 @@ import { Flex } from "rebass";
 import TruncatedText from "./TruncatedText";
 import CopiableText from "./CopiableText";
 
+import store from "../store";
+
 export default function Commitment({ commitment, key }) {
+  const { webSocket } = store.useContainer();
+
   return (
-    <Flex key={key} justifyContent={"space-between"}>
+    <Flex
+      key={key}
+      justifyContent={"space-between"}
+      onClick={() => {
+        if (commitment.status === 'sent') {
+          webSocket.send(JSON.stringify(commitment))
+        }
+      }}
+    >
       <TruncatedText
         width={128}
         lineThrough={commitment.status === 'spent'}
+        disabled={commitment.status === 'pending'}
       >
         <CopiableText id={`unspent-commitment-${key}`}>
           {commitment.commitment}
@@ -19,6 +32,7 @@ export default function Commitment({ commitment, key }) {
         width={128}
         color={"primary"}
         lineThrough={commitment.status === 'spent'}
+        disabled={commitment.status === 'pending'}
       >
         {commitment.salt}
       </TruncatedText>
@@ -26,6 +40,7 @@ export default function Commitment({ commitment, key }) {
         width={64}
         textAlign={"center"}
         lineThrough={commitment.status === 'spent'}
+        disabled={commitment.status === 'pending'}
       >
         {commitment.commitmentIndex}
       </TruncatedText>
@@ -33,6 +48,7 @@ export default function Commitment({ commitment, key }) {
         width={64}
         textAlign={"center"}
         lineThrough={commitment.status === 'spent'}
+        disabled={commitment.status === 'pending'}
       >
         {commitment.type}
       </TruncatedText>
@@ -41,6 +57,7 @@ export default function Commitment({ commitment, key }) {
         textAlign={"center"}
         color={commitment.type === "transfer" && "primary"}
         lineThrough={commitment.status === 'spent'}
+        disabled={commitment.status === 'pending'}
       >
         {commitment.amount.value}
       </TruncatedText>
