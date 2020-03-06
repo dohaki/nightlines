@@ -241,6 +241,7 @@ export async function transferCommitment(
   shieldAddress,
   proof,
   inputs,
+  root,
   nullifierC,
   nullifierD,
   commitmentE,
@@ -250,6 +251,7 @@ export async function transferCommitment(
     shieldAddress,
     proof,
     inputs,
+    root,
     nullifierC,
     nullifierD,
     commitmentE,
@@ -258,11 +260,11 @@ export async function transferCommitment(
       gasLimit: "2000000"
     }
   );
+  const latestBlocknumber = await getLatesBlocknumber();
+
   const transferTxHash = await confirmTx(transferTx.rawTx);
   
   await wait();
-
-  const latestBlocknumber = await getLatesBlocknumber();
 
   // Add information on used gas for statistics
   const gasUsed = await getGasUsedForTx(shieldAddress, transferTxHash, latestBlocknumber);
@@ -274,9 +276,9 @@ export async function transferCommitment(
     throw new Error("No NewLeaves event thrown while transferring")
   }
 
-  const minLeafIndex = relevantEvent.leafValues.minLeafIndex;
-  const indexE = minLeafIndex + relevantEvent.leafValues.indexOf(commitmentE);
-  const indexF = minLeafIndex + relevantEvent.leafValues.indexOf(commitmentF);
+  const { minLeafIndex } = relevantEvent;
+  const indexE = Number(minLeafIndex) + relevantEvent.leafValues.indexOf(commitmentE);
+  const indexF = Number(minLeafIndex) + relevantEvent.leafValues.indexOf(commitmentF);
 
   const noteE = {
     txHash: transferTxHash,
