@@ -4,10 +4,12 @@ import { readFileSync } from "fs";
 import shell from "shelljs";
 import WebSocket from "ws";
 import ethers from "ethers";
+import chalk from "chalk";
 
 import * as iou from "./iou.js";
 import * as utils from "./utils.js";
 import * as merkleTree from "./merkle-tree/index.js";
+import * as webSocket from "./webSocket.js";
 
 import config from "./config/index.js";
 
@@ -21,13 +23,7 @@ const wss = new WebSocket.Server({
   port: config.NIGHTLINES_WS_PORT
 });
 
-wss.on("connection", ws => {
-  console.log("[WS] Client connected");
-
-  ws.on("close", () => {
-    console.log("[WS] Client disconnected");
-  });
-});
+webSocket.initWebSocketServer(wss);
 
 /**
  * @example
@@ -125,15 +121,9 @@ const proofCache = {};
 async function generateTransferProof(proofCacheKey, ...proofArgs) {
   const proofObject = await iou.transfer(...proofArgs);
   proofCache[proofCacheKey] = proofObject;
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          proof: proofObject,
-          proofKey: proofCacheKey
-        })
-      );
-    }
+  webSocket.broadcastMessage({
+    proof: proofObject,
+    proofKey: proofCacheKey
   });
 }
 
@@ -155,8 +145,6 @@ app.post("/transfer-iou-commitment", async (req, res) => {
       utils.decToHex(outputCommitments[0].amount.raw),
       utils.decToHex(outputCommitments[1].amount.raw)
     );
-
-    console.log({ proofCacheKey });
 
     if (proofCache[proofCacheKey]) {
       res.json(proofCache[proofCacheKey]);
@@ -221,8 +209,6 @@ app.get("/sibling-path", async (req, res) => {
 
 function start() {
   app.listen(config.NIGHTLINES_PORT);
-  // server.timeout = 100000;
-  // server.keepAliveTimeout = 100000;
   console.log(
     `Nightlines server started. http://127.0.0.1:${config.NIGHTLINES_PORT}`
   );
