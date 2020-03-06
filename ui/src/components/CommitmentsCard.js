@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, Flex } from "rebass";
 import { get } from "lodash";
+import { Label, Radio } from '@rebass/forms'
 
 import DashboardCard from "./DashboardCard";
 import Commitment from "./Commitment";
@@ -8,6 +9,7 @@ import Commitment from "./Commitment";
 import store from "../store";
 
 export default function CommitmentsCard() {
+  const [filter, setFilter] = useState("own")
   const {
     commitments,
     fetchCommitments,
@@ -26,7 +28,7 @@ export default function CommitmentsCard() {
   }, [username]);
 
   const { unspentCommitments, spentCommitments, sentCommitments } = commitments.reduce((filteredCommitments, commitment) => {
-    if (commitment.status === "spent") {
+    if (commitment.status === "spent" || commitment.status === "pending") {
       filteredCommitments.spentCommitments.push(commitment);
     } else if (commitment.status === "unspent") {
       filteredCommitments.unspentCommitments.push(commitment);
@@ -44,8 +46,6 @@ export default function CommitmentsCard() {
     return acc + Number(get(commitment, "amount.value", 0))
   }, 0);
 
-  console.log({ unspentCommitments, spentCommitments, sentCommitments })
-
   return (
     <DashboardCard>
       <Text textAlign={"center"} fontWeight={"bold"} mb={2}>
@@ -57,9 +57,31 @@ export default function CommitmentsCard() {
         mb={3}
       >
         <Text>{iouAbbreviation} Spendable:</Text>
-        <Text>
+        <Text fontWeight={"bold"}>
           {spendable}
         </Text>
+      </Flex>
+      <Flex mb={3}>
+        <Label>
+          <Radio
+            name='filter'
+            id='own'
+            value='own'
+            checked={filter === 'own'}
+            onClick={() => setFilter('own')}
+          />
+          Own notes
+        </Label>
+        <Label>
+          <Radio
+            name='filter'
+            id='sent'
+            value='sent'
+            checked={filter === 'sent'}
+            onClick={() => setFilter('sent')}
+          />
+          Sent notes
+        </Label>
       </Flex>
       <Flex justifyContent={"space-between"}>
         <Text width={128} fontWeight={"bold"}>
@@ -78,17 +100,21 @@ export default function CommitmentsCard() {
           Amount
         </Text>
       </Flex>
-      {unspentCommitments.map((commitment, i) => (
-        <Commitment commitment={commitment} key={i} />
-      ))}
-      <Flex />
-      {spentCommitments.map((commitment, i) => (
-        <Commitment commitment={commitment} key={i} />
-      ))}
-      <Flex />
-      {sentCommitments.map((commitment, i) => (
-        <Commitment commitment={commitment} key={i} />
-      ))}
+      {filter === "own" ? (
+        <>
+          {unspentCommitments.map((commitment, i) => (
+            <Commitment commitment={commitment} key={i} />
+          ))}
+          <Flex />
+          {spentCommitments.map((commitment, i) => (
+            <Commitment commitment={commitment} key={i} />
+          ))}
+        </>
+      ) : (
+        sentCommitments.map((commitment, i) => (
+          <Commitment commitment={commitment} key={i} />
+        ))
+      )}
     </DashboardCard>
   )
 };

@@ -81,6 +81,7 @@ export default function Mint() {
             decimals
           },
           type: "mint",
+          status: localforage.COMMITMENT_STATUS.UNSPENT,
           gasUsed: mintCommitment.gasUsed
         }
       );
@@ -90,6 +91,7 @@ export default function Mint() {
       fetchCommitments(username);
       setMintValue(0);
     } catch (error) {
+      console.error(error);
       toast(error.toString(), { type: "error" });
     } finally {
       setLoading(false);

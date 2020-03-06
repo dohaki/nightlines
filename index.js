@@ -3,6 +3,7 @@ import cors from "cors";
 import { readFileSync } from "fs";
 import shell from "shelljs";
 import WebSocket from "ws";
+import ethers from "ethers";
 
 import * as iou from "./iou.js";
 import * as utils from "./utils.js";
@@ -21,9 +22,7 @@ const wss = new WebSocket.Server({
 });
 
 wss.on("connection", ws => {
-  ws.on("open", () => {
-    console.log("[WS] Client connected");
-  });
+  console.log("[WS] Client connected");
 
   ws.on("close", () => {
     console.log("[WS] Client disconnected");
@@ -128,10 +127,12 @@ async function generateTransferProof(proofCacheKey, ...proofArgs) {
   proofCache[proofCacheKey] = proofObject;
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send({
-        proof: proofObject,
-        proofKey: proofCacheKey
-      });
+      client.send(
+        JSON.stringify({
+          proof: proofObject,
+          proofKey: proofCacheKey
+        })
+      );
     }
   });
 }
@@ -148,16 +149,19 @@ app.post("/transfer-iou-commitment", async (req, res) => {
     // TODO: Validate params
 
     // Only for demo purposes
-    const proofCacheKey = utils.concatenateThenHash(
+    const proofCacheKey = ethers.utils.sha256(
       utils.decToHex(inputCommitments[0].commitmentIndex),
       utils.decToHex(inputCommitments[1].commitmentIndex),
       utils.decToHex(outputCommitments[0].amount.raw),
       utils.decToHex(outputCommitments[1].amount.raw)
     );
 
+    console.log({ proofCacheKey });
+
     if (proofCache[proofCacheKey]) {
       res.json(proofCache[proofCacheKey]);
     } else {
+      res.json(proofCacheKey);
       generateTransferProof(
         proofCacheKey,
         shieldAddress,
@@ -166,7 +170,6 @@ app.post("/transfer-iou-commitment", async (req, res) => {
         zkpPublicKeyReceiver,
         zkpPrivateKeySender
       );
-      res.json(proofCacheKey);
     }
   } catch (error) {
     console.log(error);

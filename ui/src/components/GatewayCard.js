@@ -109,13 +109,11 @@ export default function GatewayCard() {
         <Box>
           <Text color={"background"}>{"invisible"}</Text>
           <Button
-            disabled={loading}
+            loading={loading}
             onClick={handleClick}
             minWidth={150}
           >
-            {loading ? (
-              "Depositing..."
-            ) : "Deposit"}
+            Deposit
           </Button>
         </Box>
       </Flex>

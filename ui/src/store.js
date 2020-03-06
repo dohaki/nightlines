@@ -7,6 +7,7 @@ import useSelectedNetwork from "./hooks/useSelectedNetwork";
 import useLoadedUser from "./hooks/useLoadedUser";
 import useNetworks from "./hooks/useNetworks";
 import useCommitments from "./hooks/useCommitments";
+import useWebSocket from "./hooks/useWebSocket";
 
 const composeHooks = (...hooks) => () => hooks.reduce(
   (acc, hook) => {
@@ -26,7 +27,8 @@ const store = createContainer(composeHooks(
   useSelectedNetwork,
   useLoadedUser,
   useNetworks,
-  useCommitments
+  useCommitments,
+  useWebSocket
 ));
 
 export default store;

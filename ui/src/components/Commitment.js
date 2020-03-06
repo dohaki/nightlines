@@ -9,7 +9,7 @@ export default function Commitment({ commitment, key }) {
     <Flex key={key} justifyContent={"space-between"}>
       <TruncatedText
         width={128}
-        lineThrough={commitment.spent}
+        lineThrough={commitment.status === 'spent'}
       >
         <CopiableText id={`unspent-commitment-${key}`}>
           {commitment.commitment}
@@ -18,21 +18,21 @@ export default function Commitment({ commitment, key }) {
       <TruncatedText
         width={128}
         color={"primary"}
-        lineThrough={commitment.spent}
+        lineThrough={commitment.status === 'spent'}
       >
         {commitment.salt}
       </TruncatedText>
       <TruncatedText
         width={64}
         textAlign={"center"}
-        lineThrough={commitment.spent}
+        lineThrough={commitment.status === 'spent'}
       >
         {commitment.commitmentIndex}
       </TruncatedText>
       <TruncatedText
         width={64}
         textAlign={"center"}
-        lineThrough={commitment.spent}
+        lineThrough={commitment.status === 'spent'}
       >
         {commitment.type}
       </TruncatedText>
@@ -40,7 +40,7 @@ export default function Commitment({ commitment, key }) {
         width={64}
         textAlign={"center"}
         color={commitment.type === "transfer" && "primary"}
-        lineThrough={commitment.spent}
+        lineThrough={commitment.status === 'spent'}
       >
         {commitment.amount.value}
       </TruncatedText>

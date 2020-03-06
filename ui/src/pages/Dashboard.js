@@ -20,7 +20,9 @@ export default function Dashboard() {
     loadUserByUsername,
     loadedUser,
     networks,
-    fetchNetworks
+    fetchNetworks,
+    createWebSocket,
+    closeWebSocket
   } = store.useContainer();
 
   useEffect(() => {
@@ -40,6 +42,11 @@ export default function Dashboard() {
       setSelectedNetwork(networks[selectedNetworkIndex]);
     }
   }, [selectedNetworkIndex, networks, setSelectedNetwork])
+
+  useEffect(() => {
+    createWebSocket();
+    return () => closeWebSocket();
+  }, [])
 
   return (
     <>
