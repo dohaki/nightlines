@@ -5,12 +5,14 @@ import { Label, Radio } from '@rebass/forms'
 
 import DashboardCard from "./DashboardCard";
 import Commitment from "./Commitment";
+import CommitmentModal from "./CommitmentModal";
 
 import * as localforage from "../apis/localforage";
 
 import store from "../store";
 
 export default function CommitmentsCard() {
+  const [selectedCommitment, setSelectedCommitment] = useState()
   const [filter, setFilter] = useState("own")
   const {
     commitments,
@@ -73,6 +75,10 @@ export default function CommitmentsCard() {
 
   return (
     <DashboardCard>
+      <CommitmentModal
+        commitment={selectedCommitment}
+        onClose={() => setSelectedCommitment()}
+      />
       <Text textAlign={"center"} fontWeight={"bold"} mb={2}>
         NOTES
       </Text>
@@ -128,16 +134,28 @@ export default function CommitmentsCard() {
       {filter === "own" ? (
         <>
           {unspentCommitments.map((commitment, i) => (
-            <Commitment commitment={commitment} key={i} />
+            <Commitment
+              commitment={commitment}
+              key={i}
+              onClick={() => setSelectedCommitment(commitment)}
+            />
           ))}
           <Flex />
           {spentCommitments.map((commitment, i) => (
-            <Commitment commitment={commitment} key={i} />
+            <Commitment
+              commitment={commitment}
+              key={i}
+              onClick={() => setSelectedCommitment(commitment)}
+            />
           ))}
         </>
       ) : (
         sentCommitments.map((commitment, i) => (
-          <Commitment commitment={commitment} key={i} />
+          <Commitment
+            commitment={commitment}
+            key={i}
+            onClick={() => setSelectedCommitment(commitment)}
+          />
         ))
       )}
     </DashboardCard>

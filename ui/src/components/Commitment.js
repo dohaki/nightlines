@@ -4,20 +4,12 @@ import { Flex } from "rebass";
 import TruncatedText from "./TruncatedText";
 import CopiableText from "./CopiableText";
 
-import store from "../store";
-
-export default function Commitment({ commitment, key }) {
-  const { webSocket } = store.useContainer();
-
+export default function Commitment({ commitment, key, onClick }) {
   return (
     <Flex
       key={key}
       justifyContent={"space-between"}
-      onClick={() => {
-        if (commitment.status === 'sent') {
-          webSocket.send(JSON.stringify(commitment))
-        }
-      }}
+      onClick={onClick}
     >
       <TruncatedText
         width={128}

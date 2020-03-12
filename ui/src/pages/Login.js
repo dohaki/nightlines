@@ -31,6 +31,7 @@ export default function Login() {
         await localforage.setUser(user)
       }
       await tlLib.loadUser(user.walletData);
+      await tlLib.getCoins();
       sessionStorage.setCurrentUsername(username);
       history.replace("/");
     } catch (error) {
