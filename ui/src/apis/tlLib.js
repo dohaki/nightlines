@@ -6,7 +6,7 @@ import * as nightlines from "./nightlines";
 
 import config from "../config";
 
-const VK_TYPES = ['mint', 'transfer', 'burn'];
+export const VK_TYPES = ['mint', 'transfer', 'burn'];
 
 const tlNetwork = new TLNetwork({
   port: config.RELAY_PORT,
@@ -143,6 +143,14 @@ export async function getRegisteredVK(
   return registeredVKs[vkTypeIndex];
 }
 
+export async function getAllRegisteredVKs(
+  shieldAddress
+) {
+  const response = await fetch(`${tlNetwork.provider.relayApiUrl}/shields/${shieldAddress}/vks`);
+  const registeredVKs = await response.json();
+  return registeredVKs;
+}
+
 export async function openCollateralized(
   gatewayAddress,
   collateral,
@@ -234,6 +242,48 @@ export async function mintCommitment(
       byShieldContract: get(gasUsed, "byShieldContract"),
       byCurrencyNetworkContract: get(gasUsed, "byCurrencyNetworkContract"),
     }
+  }
+}
+
+export async function burnCommitment(
+  shieldAddress,
+  proof,
+  inputs,
+  root,
+  nullifier,
+  value,
+  payTo
+) {
+  const burnTx = await tlNetwork.shield.prepareBurnCommitment(
+    shieldAddress,
+    proof,
+    inputs,
+    root,
+    nullifier,
+    value,
+    payTo,
+    {
+      gasLimit: "2000000"
+    }
+  );
+  const burnTxHash = await confirmTx(burnTx.rawTx);
+  
+  await wait();
+
+  const latestBlocknumber = await getLatesBlocknumber();
+
+  // Add information on used gas for statistics
+  const gasUsed = await getGasUsedForTx(shieldAddress, burnTxHash, latestBlocknumber);
+
+  return {
+    txHash: burnTxHash,
+    type: "burn",
+    gasUsed: {
+      byVerifierContract: get(gasUsed, "byVerifierContract"),
+      byShieldContract: get(gasUsed, "byShieldContract"),
+      byCurrencyNetworkContract: get(gasUsed, "byCurrencyNetworkContract"), 
+    },
+    status: "spent",
   }
 }
 
