@@ -8,6 +8,11 @@ import useLoadedUser from "./hooks/useLoadedUser";
 import useNetworks from "./hooks/useNetworks";
 import useCommitments from "./hooks/useCommitments";
 import useWebSocket from "./hooks/useWebSocket";
+import {
+  useBurnProofKeys,
+  useTransferProofKeys,
+  useMintProofKeys
+} from "./hooks/useProofKeys";
 
 const composeHooks = (...hooks) => () => hooks.reduce(
   (acc, hook) => {
@@ -28,7 +33,10 @@ const store = createContainer(composeHooks(
   useLoadedUser,
   useNetworks,
   useCommitments,
-  useWebSocket
+  useWebSocket,
+  useBurnProofKeys,
+  useTransferProofKeys,
+  useMintProofKeys
 ));
 
 export default store;
