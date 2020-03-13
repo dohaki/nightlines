@@ -49,7 +49,7 @@ const durationLogLabel = `${chalk.magenta("ZoKrates")} Duration`;
  *  amount: string
  * }>}
  */
-export async function mint(amount, zkpPublicKey, salt) {
+export async function mint(shieldAddress, amount, zkpPublicKey, salt) {
   logTitle("⛏️  Mint IOU Commitment");
   // Calculate new arguments for the proof:
   const amountHex = utils.decToPaddedHex(String(amount), 32);
@@ -120,7 +120,7 @@ export async function mint(amount, zkpPublicKey, salt) {
   console.log("PublicInputs:");
   console.log(publicInputs);
 
-  return { commitment, proof, publicInputs, amount };
+  return { commitment, proof, publicInputs, amount, salt };
 }
 
 /**
@@ -659,201 +659,166 @@ export async function transfer(
 //   };
 // }
 
-// /**
-//  * This function burns a commitment, i.e. it recovers ERC-20 into your
-//  * account. All values are hex strings.
-//  * @param {string} amount - the value of the commitment in hex (i.e. the amount you are burning)
-//  * @param {string} receiverZkpPrivateKey - the secret key of the person doing the burning (in hex)
-//  * @param {string} salt - the random nonce used in the commitment
-//  * @param {string} commitment - the value of the commitment being burned
-//  * @param {string} commitmentIndex - the index of the commitment in the Merkle Tree
-//  * @param {Object} blockchainOptions
-//  * @param {String} blockchainOptions.fTokenShieldJson - ABI of fTokenShieldInstance
-//  * @param {String} blockchainOptions.fTokenShieldAddress - Address of deployed fTokenShieldContract
-//  * @param {String} blockchainOptions.account - Account that is sending these transactions
-//  * @param {String} blockchainOptions.tokenReceiver - Account that will receive the tokens
-//  */
-// async function burn(
-//   amount,
-//   receiverZkpPrivateKey,
-//   salt,
-//   commitment,
-//   commitmentIndex,
-//   blockchainOptions,
-//   zokratesOptions
-// ) {
-//   const {
-//     fTokenShieldJson,
-//     fTokenShieldAddress,
-//     tokenReceiver: _payTo
-//   } = blockchainOptions;
+export async function burn(
+  shieldAddress,
+  payTo,
+  commitment,
+  zkpPrivateKeyOwner
+) {
+  logTitle("🔥 Burn IOU Commitment");
 
-//   const account = utils.ensure0x(blockchainOptions.account);
+  const nullifier = utils.concatenateThenHash(
+    commitment.salt,
+    zkpPrivateKeyOwner
+  );
 
-//   const {
-//     codePath,
-//     outputDirectory,
-//     witnessName = "witness",
-//     pkPath,
-//     provingScheme = "gm17",
-//     createProofJson = true,
-//     proofName = "proof.json"
-//   } = zokratesOptions;
+  const amountHex = utils.decToPaddedHex(String(commitment.amount.raw), 32);
 
-//   let payTo = _payTo;
-//   if (payTo === undefined) payTo = account; // have the option to pay out to another address
-//   // before we can burn, we need to deploy a verifying key to mintVerifier (reusing mint for this)
-//   console.log("\nIN BURN...");
+  // Get the sibling-path from the token commitments (leaves) to the root. Express each node as an Element class.
+  const siblingPath = await merkleTree.getSiblingPath(
+    shieldAddress,
+    commitment.commitment,
+    commitment.commitmentIndex
+  );
 
-//   console.log("Finding the relevant Shield and Verifier contracts");
-//   const fTokenShield = contract(fTokenShieldJson);
-//   fTokenShield.setProvider(Web3.connect());
-//   const fTokenShieldInstance = await fTokenShield.at(fTokenShieldAddress);
+  const root = siblingPath[0];
 
-//   // Calculate new arguments for the proof:
-//   const nullifier = utils.concatenateThenHash(salt, receiverZkpPrivateKey);
+  const siblingPathElements = siblingPath.map(nodeValue =>
+    utils.toProofElement(
+      nodeValue,
+      "field",
+      config.MERKLE_TREE_NODE_HASHLENGTH * 8,
+      1
+    )
+  ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
 
-//   // Get the sibling-path from the token commitments (leaves) to the root. Express each node as an Element class.
-//   const siblingPath = await merkleTree.getSiblingPath(
-//     account,
-//     fTokenShieldInstance,
-//     commitment,
-//     commitmentIndex
-//   );
+  // Summarise values in the console:
+  console.log("Existing Proof Inputs:");
+  const p = config.ZOKRATES_PACKING_SIZE;
+  logProofInput("amountHex", amountHex, utils.hexToFieldPreserve(amountHex, p));
+  logProofInput(
+    "zkpPrivateKeyOwner",
+    zkpPrivateKeyOwner,
+    utils.hexToFieldPreserve(zkpPrivateKeyOwner, p)
+  );
+  logProofInput(
+    "salt",
+    commitment.salt,
+    utils.hexToFieldPreserve(commitment.salt, p)
+  );
+  logProofInput("payTo", payTo, utils.hexToFieldPreserve(payTo, p));
+  const payToLeftPadded = utils.leftPadHex(
+    payTo,
+    config.MERKLE_TREE_LEAF_HASHLENGTH * 2
+  ); // left-pad the payToAddress with 0's to fill all 256 bits (64 octets) (so the sha256 function is hashing the same thing as inside the zokrates proof)
+  logProofInput(
+    "payToLeftPadded",
+    payToLeftPadded,
+    utils.hexToFieldPreserve(payToLeftPadded, p)
+  );
 
-//   const root = siblingPath[0];
-//   // TODO: checkRoot() is not essential. It's only useful for debugging as we make iterative improvements to nightfall's zokrates files. Possibly delete in future.
-//   merkleTree.checkRoot(commitment, commitmentIndex, siblingPath, root);
+  console.log("Generated Proof Inputs:");
+  logProofInput("nullifier", nullifier, utils.hexToFieldPreserve(nullifier, p));
+  logProofInput(
+    "commitment",
+    commitment.commitment,
+    utils.hexToFieldPreserve(commitment.commitment, p)
+  );
+  logProofInput("root", root, utils.hexToFieldPreserve(root, p));
+  logProofInput("siblingPath", siblingPath);
+  logProofInput("commitmentIndex", commitment.commitmentIndex);
 
-//   const siblingPathElements = siblingPath.map(
-//     nodeValue => new Element(nodeValue, "field", config.MERKLE_TREE_NODE_HASHLENGTH * 8, 1)
-//   ); // we truncate to 216 bits - sending the whole 256 bits will overflow the prime field
+  const publicInputHash = utils.concatenateThenHash(
+    root,
+    nullifier,
+    amountHex,
+    payToLeftPadded
+  ); // notice we're using the version of payTo which has been padded to 256-bits; to match our derivation of publicInputHash within our zokrates proof.
+  logProofInput(
+    "publicInputHash:",
+    publicInputHash,
+    utils.hexToFieldPreserve(publicInputHash, 248, 1, 1)
+  );
 
-//   // Summarise values in the console:
-//   console.log("Existing Proof Variables:");
-//   const p = config.ZOKRATES_PACKING_SIZE;
-//   console.log(`amount: ${amount} : ${utils.hexToFieldPreserve(amount, p)}`);
-//   console.log(
-//     `receiverSecretKey: ${receiverZkpPrivateKey} : ${utils.hexToFieldPreserve(
-//       receiverZkpPrivateKey,
-//       p
-//     )}`
-//   );
-//   console.log(`salt: ${salt} : ${utils.hexToFieldPreserve(salt, p)}`);
-//   console.log(`payTo: ${payTo} : ${utils.hexToFieldPreserve(payTo, p)}`);
-//   const payToLeftPadded = utils.leftPadHex(payTo, config.LEAF_HASHLENGTH * 2); // left-pad the payToAddress with 0's to fill all 256 bits (64 octets) (so the sha256 function is hashing the same thing as inside the zokrates proof)
-//   console.log(`payToLeftPadded: ${payToLeftPadded}`);
+  const allInputs = utils.formatInputsForZkSnark([
+    utils.toProofElement(publicInputHash, "field", 248, 1),
+    utils.toProofElement(payTo, "field"),
+    utils.toProofElement(amountHex, "field", 128, 1),
+    utils.toProofElement(zkpPrivateKeyOwner, "field"),
+    utils.toProofElement(commitment.salt, "field"),
+    ...siblingPathElements.slice(1),
+    utils.toProofElement(commitment.commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
+    utils.toProofElement(nullifier, "field"),
+    utils.toProofElement(root, "field")
+  ]);
 
-//   console.log("New Proof Variables:");
-//   console.log(
-//     `nullifier: ${nullifier} : ${utils.hexToFieldPreserve(nullifier, p)}`
-//   );
-//   console.log(
-//     `commitment: ${commitment} : ${utils.hexToFieldPreserve(commitment, p)}`
-//   );
-//   console.log(`root: ${root} : ${utils.hexToFieldPreserve(root, p)}`);
-//   console.log(`siblingPath:`, siblingPath);
-//   console.log(`commitmentIndex:`, commitmentIndex);
+  // console.log(
+  //   "To debug witness computation, use ./zok to run up a zokrates container then paste these arguments into the terminal:"
+  // );
+  // console.log(
+  //   `./zokrates compute-witness -a ${allInputs.join(" ")} -i gm17/ft-burn/out`
+  // );
 
-//   const publicInputHash = utils.concatenateThenHash(
-//     root,
-//     nullifier,
-//     amount,
-//     payToLeftPadded
-//   ); // notice we're using the version of payTo which has been padded to 256-bits; to match our derivation of publicInputHash within our zokrates proof.
-//   console.log(
-//     "publicInputHash:",
-//     publicInputHash,
-//     " : ",
-//     utils.hexToFieldPreserve(publicInputHash, 248, 1, 1)
-//   );
+  const burnInputDir = `${shell.pwd()}/zokrates/iou-burn`;
 
-//   // compute the proof
-//   console.log("Computing witness...");
+  console.time(durationLogLabel);
+  await zokrates.computeWitness(burnInputDir, allInputs);
+  console.timeEnd(durationLogLabel);
 
-//   const allInputs = utils.formatInputsForZkSnark([
-//     new Element(publicInputHash, "field", 248, 1),
-//     new Element(payTo, "field"),
-//     new Element(amount, "field", 128, 1),
-//     new Element(receiverZkpPrivateKey, "field"),
-//     new Element(salt, "field"),
-//     ...siblingPathElements.slice(1),
-//     new Element(commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
-//     new Element(nullifier, "field"),
-//     new Element(root, "field")
-//   ]);
+  console.time(durationLogLabel);
+  await zokrates.generateProof(burnInputDir);
+  console.timeEnd(durationLogLabel);
 
-//   console.log(
-//     "To debug witness computation, use ./zok to run up a zokrates container then paste these arguments into the terminal:"
-//   );
-//   console.log(
-//     `./zokrates compute-witness -a ${allInputs.join(" ")} -i gm17/ft-burn/out`
-//   );
+  let { proof } = JSON.parse(
+    readFileSync(`${burnInputDir}/iou-burn-proof.json`)
+  );
 
-//   await zokrates.computeWitness(
-//     codePath,
-//     outputDirectory,
-//     witnessName,
-//     allInputs
-//   );
+  proof = Object.values(proof);
+  // convert to flattened array:
+  proof = utils.flattenDeep(proof);
+  // convert to decimal, as the solidity functions expect uints
+  proof = proof.map(el => utils.hexToDec(el));
 
-//   console.log("Computing proof...");
-//   await zokrates.generateProof(
-//     pkPath,
-//     codePath,
-//     `${outputDirectory}/witness`,
-//     provingScheme,
-//     {
-//       createFile: createProofJson,
-//       directory: outputDirectory,
-//       fileName: proofName
-//     }
-//   );
+  const publicInputs = utils.formatInputsForZkSnark([
+    utils.toProofElement(publicInputHash, "field", 248, 1)
+  ]);
 
-//   let { proof } = JSON.parse(
-//     fs.readFileSync(`${outputDirectory}/${proofName}`)
-//   );
+  console.log("proof:");
+  console.log(proof);
+  console.log("publicInputs:");
+  console.log(publicInputs);
 
-//   proof = Object.values(proof);
-//   // convert to flattened array:
-//   proof = utils.flattenDeep(proof);
-//   // convert to decimal, as the solidity functions expect uints
-//   proof = proof.map(el => utils.hexToDec(el));
+  return {
+    commitment,
+    publicInputs,
+    root,
+    proof,
+    nullifier
+  };
 
-//   console.log("Burning within the Shield contract");
+  // // Burn the commitment and return tokens to the payTo account.
+  // const txReceipt = await fTokenShieldInstance.burn(
+  //   proof,
+  //   publicInputs,
+  //   root,
+  //   nullifier,
+  //   amount,
+  //   payTo,
+  //   {
+  //     from: account,
+  //     gas: 6500000,
+  //     gasPrice: config.GASPRICE
+  //   }
+  // );
+  // utils.gasUsedStats(txReceipt, "burn");
 
-//   const publicInputs = utils.formatInputsForZkSnark([
-//     new Element(publicInputHash, "field", 248, 1)
-//   ]);
+  // const newRoot = await fTokenShieldInstance.latestRoot();
+  // console.log(`Merkle Root after burn: ${newRoot}`);
 
-//   console.log("proof:");
-//   console.log(proof);
-//   console.log("publicInputs:");
-//   console.log(publicInputs);
+  // console.log("BURN COMPLETE\n");
 
-//   // Burn the commitment and return tokens to the payTo account.
-//   const txReceipt = await fTokenShieldInstance.burn(
-//     proof,
-//     publicInputs,
-//     root,
-//     nullifier,
-//     amount,
-//     payTo,
-//     {
-//       from: account,
-//       gas: 6500000,
-//       gasPrice: config.GASPRICE
-//     }
-//   );
-//   utils.gasUsedStats(txReceipt, "burn");
-
-//   const newRoot = await fTokenShieldInstance.latestRoot();
-//   console.log(`Merkle Root after burn: ${newRoot}`);
-
-//   console.log("BURN COMPLETE\n");
-
-//   return { z_C: commitment, z_C_index: commitmentIndex, txReceipt };
-// }
+  // return { z_C: commitment, z_C_index: commitmentIndex, txReceipt };
+}
 
 // module.exports = {
 //   mint,

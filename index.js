@@ -4,7 +4,6 @@ import { readFileSync } from "fs";
 import shell from "shelljs";
 import WebSocket from "ws";
 import ethers from "ethers";
-import chalk from "chalk";
 
 import * as iou from "./iou.js";
 import * as utils from "./utils.js";
@@ -89,39 +88,106 @@ app.get("/vk", async (req, res) => {
   }
 });
 
+// cache proofs that take long to generate
+// map `cacheKey` to `proof || 'PENDING'`
+const proofCache = {};
+const PENDING = "PENDING";
+
+async function generateMintProof(proofCacheKey, ...proofArgs) {
+  const proofObject = await iou.mint(...proofArgs);
+  proofCache[proofCacheKey] = proofObject;
+  webSocket.broadcastMessage(wss, {
+    proof: proofObject,
+    proofKey: proofCacheKey
+  });
+}
+
 /**
  * @example
  * curl -X POST 127.0.0.1:3001/mint-iou-commitment -H "Content-Type: application/json" --data '{ "amount": 100, "zkpPublicKey": "0xcd5618889e18a1d3e7a2cb9b1bb3270bc08753aae1c60f82d1fc71957e8e984c", "salt": "0x0d8533cfd32693a2ecbd72be5ff05456972de489c5f8273116cab1191a3323e8" }'
  */
 app.post("/mint-iou-commitment", async (req, res) => {
   try {
-    const { amount, zkpPublicKey, salt } = req.body;
     // TODO: Validate params
-    const { commitment, proof, publicInputs } = await iou.mint(
-      amount,
-      zkpPublicKey,
-      salt
+    const { shieldAddress, amount, zkpPublicKey, salt } = req.body;
+
+    // Only for demo purposes
+    const proofCacheKey = ethers.utils.sha256(salt, utils.decToHex(amount));
+
+    // If cache is empty for given key set to pending and start proof generation
+    if (typeof proofCache[proofCacheKey] === "undefined") {
+      proofCache[proofCacheKey] = PENDING;
+      generateMintProof(
+        proofCacheKey,
+        shieldAddress,
+        amount,
+        zkpPublicKey,
+        salt
+      );
+    }
+
+    if (proofCache[proofCacheKey] === PENDING) {
+      res.json(proofCacheKey);
+    }
+
+    if (typeof proofCache[proofCacheKey] === "object") {
+      res.json(proofCache[proofCacheKey]);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ error });
+  }
+});
+
+async function generateBurnProof(proofCacheKey, ...proofArgs) {
+  const proofObject = await iou.burn(...proofArgs);
+  proofCache[proofCacheKey] = proofObject;
+  webSocket.broadcastMessage(wss, {
+    proof: proofObject,
+    proofKey: proofCacheKey
+  });
+}
+
+app.post("/burn-iou-commitment", async (req, res) => {
+  try {
+    // TODO: Validate params
+    const { shieldAddress, payTo, commitment, zkpPrivateKeyOwner } = req.body;
+
+    // Only for demo purposes
+    const proofCacheKey = ethers.utils.sha256(
+      utils.decToHex(commitment.commitmentIndex),
+      utils.decToHex(commitment.amount.raw)
     );
-    res.json({
-      commitment,
-      proof,
-      publicInputs,
-      amount,
-      salt
-    });
+
+    // If cache is empty for given key set to pending and start proof generation
+    if (typeof proofCache[proofCacheKey] === "undefined") {
+      proofCache[proofCacheKey] = PENDING;
+      generateBurnProof(
+        proofCacheKey,
+        shieldAddress,
+        payTo,
+        commitment,
+        zkpPrivateKeyOwner
+      );
+    }
+
+    if (proofCache[proofCacheKey] === PENDING) {
+      res.json(proofCacheKey);
+    }
+
+    if (typeof proofCache[proofCacheKey] === "object") {
+      res.json(proofCache[proofCacheKey]);
+    }
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
   }
 });
 
-// cache proofs that take long to generate
-const proofCache = {};
-
 async function generateTransferProof(proofCacheKey, ...proofArgs) {
   const proofObject = await iou.transfer(...proofArgs);
   proofCache[proofCacheKey] = proofObject;
-  webSocket.broadcastMessage({
+  webSocket.broadcastMessage(wss, {
     proof: proofObject,
     proofKey: proofCacheKey
   });
@@ -146,10 +212,9 @@ app.post("/transfer-iou-commitment", async (req, res) => {
       utils.decToHex(outputCommitments[1].amount.raw)
     );
 
-    if (proofCache[proofCacheKey]) {
-      res.json(proofCache[proofCacheKey]);
-    } else {
-      res.json(proofCacheKey);
+    // If cache is empty for given key set to pending and start proof generation
+    if (typeof proofCache[proofCacheKey] === "undefined") {
+      proofCache[proofCacheKey] = PENDING;
       generateTransferProof(
         proofCacheKey,
         shieldAddress,
@@ -158,6 +223,14 @@ app.post("/transfer-iou-commitment", async (req, res) => {
         zkpPublicKeyReceiver,
         zkpPrivateKeySender
       );
+    }
+
+    if (proofCache[proofCacheKey] === PENDING) {
+      res.json(proofCacheKey);
+    }
+
+    if (typeof proofCache[proofCacheKey] === "object") {
+      res.json(proofCache[proofCacheKey]);
     }
   } catch (error) {
     console.log(error);

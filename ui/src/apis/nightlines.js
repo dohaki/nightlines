@@ -21,6 +21,7 @@ export async function getVKOf(type) {
 }
 
 export async function getMintProof(
+  shieldAddress,
   mintValueRaw,
   zkpPublicKey,
   salt
@@ -32,11 +33,18 @@ export async function getMintProof(
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
+      shieldAddress,
       amount: mintValueRaw,
       zkpPublicKey,
       salt
     })
   });
+
+  if (!response.ok) {
+    const { error } = await response.json();
+    throw new Error(error.message || response.statusText)
+  }
+
   const proof = await response.json();
   return proof;
 }
@@ -79,4 +87,26 @@ export async function getLeafByLeafIndex(
   const response = await fetch(`${NIGHTLINES_URL}/leaf-by-leaf-index`);
   const keyPair = await response.json();
   return keyPair;
+}
+
+export async function getBurnProof(
+  shieldAddress,
+  payTo,
+  commitment,
+  zkpPrivateKeyOwner
+) {
+  const response = await fetch(`${NIGHTLINES_URL}/burn-iou-commitment`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      shieldAddress,
+      payTo,
+      commitment,
+      zkpPrivateKeyOwner
+    })
+  });
+  const proof = await response.json();
+  return proof;
 }
