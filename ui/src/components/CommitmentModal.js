@@ -1,11 +1,13 @@
 import React from 'react'
-import { Flex, Text } from "rebass";
+import { Box, Flex, Text } from "rebass";
 import { PieChart, Pie, Legend, Cell } from 'recharts';
 
 import Modal from "./Modal"
 import TruncatedText from "./TruncatedText"
 import CopiableText from "./CopiableText"
-import Button from "./Button"
+import Burn from "./Burn"
+
+import store from "../store";
 
 function CommitmentRow({ title, content }) {
   return (
@@ -85,53 +87,57 @@ function GasUsage({ gasUsed }) {
 }
 
 export default function CommitmentModal({ commitment, ...props }) {
-  return commitment ? (
+  const {
+    commitments: notes
+  } = store.useContainer();
+
+  const note = notes.find(n => n.commitment === commitment)
+
+  return note ? (
     <Modal {...props}>
       <Text textAlign={"center"} fontWeight={"bold"} m={2}>
         NOTE
       </Text>
       <CommitmentRow
         title={"Shield"}
-        content={commitment.shieldAddress}
+        content={note.shieldAddress}
       />
       <CommitmentRow
         title={"Commitment"}
-        content={commitment.commitment}
+        content={note.commitment}
       />
       <CommitmentRow
         title={"ZKP PK Owner"}
-        content={commitment.zkpPublicKey}
+        content={note.zkpPublicKey}
       />
       <CommitmentRow
         title={"Salt"}
-        content={commitment.salt}
+        content={note.salt}
       />
       <CommitmentRow
         title={"Amount"}
-        content={commitment.amount.value}
+        content={note.amount.value}
       />
       <CommitmentRow
         title={"Index"}
-        content={commitment.commitmentIndex}
+        content={note.commitmentIndex}
       />
       <CommitmentRow
         title={"Type"}
-        content={commitment.type}
+        content={note.type}
       />
       <CommitmentRow
         title={"Status"}
-        content={commitment.status}
+        content={note.status}
       />
-      <GasUsage gasUsed={commitment.gasUsed} />
-      <Flex justifyContent="center" my={3}>
-        <Button
-          // loading={loading}
-          onClick={() => console.log("burn")}
-          minWidth={150}
-        >
-          Burn
-        </Button>
-      </Flex>
+      <GasUsage gasUsed={note.gasUsed} />
+      {note.status === "UNSPENT" ? (
+        <Burn note={note} />
+      ) : note.status === "SENT" ? (
+        <Box>SEND ON SECURE OFF</Box>
+      ) : (
+        <Box />
+      )}
     </Modal>
   ) : null
 }

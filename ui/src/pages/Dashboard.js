@@ -22,7 +22,8 @@ export default function Dashboard() {
     networks,
     fetchNetworks,
     createWebSocket,
-    closeWebSocket
+    closeWebSocket,
+    webSocket,
   } = store.useContainer();
 
   useEffect(() => {

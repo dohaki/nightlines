@@ -4,7 +4,9 @@ function useProofKeys() {
   const [proofKeys, setProofKeys] = useState([]);
 
   function addProofKey(proofKey) {
-    setProofKeys([...proofKeys, proofKey]);
+    if (proofKeys.indexOf(proofKey) === -1) {
+      setProofKeys([...proofKeys, proofKey]);
+    }
   }
 
   function removeProofKey(proofKey) {

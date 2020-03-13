@@ -137,7 +137,7 @@ export default function CommitmentsCard() {
             <Commitment
               commitment={commitment}
               key={i}
-              onClick={() => setSelectedCommitment(commitment)}
+              onClick={() => setSelectedCommitment(commitment.commitment)}
             />
           ))}
           <Flex />
@@ -145,7 +145,7 @@ export default function CommitmentsCard() {
             <Commitment
               commitment={commitment}
               key={i}
-              onClick={() => setSelectedCommitment(commitment)}
+              onClick={() => setSelectedCommitment(commitment.commitment)}
             />
           ))}
         </>
@@ -154,7 +154,7 @@ export default function CommitmentsCard() {
           <Commitment
             commitment={commitment}
             key={i}
-            onClick={() => setSelectedCommitment(commitment)}
+            onClick={() => setSelectedCommitment(commitment.commitment)}
           />
         ))
       )}
