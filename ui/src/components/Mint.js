@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Text, Flex, Box } from "rebass";
 import { Input } from "@rebass/forms";
 import { get } from "lodash";
@@ -123,12 +123,6 @@ export default function Mint() {
         />
       </Box>
       <Box>
-        <Text
-          color={"background"}
-          textAlign={"center"}
-        >
-          Register VK
-        </Text>
         <Button
           loading={loading}
           onClick={handleClick}

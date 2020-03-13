@@ -10,8 +10,6 @@ export function useMintProofEventListener(proofHandler) {
     removeMintProofKey
   } = store.useContainer()
 
-  console.log({ mintProofKeys })
-
   const { addListener, destroyListener } = useEventListener(
     "message",
     webSocket
@@ -29,6 +27,7 @@ export function useMintProofEventListener(proofHandler) {
         proofHandler(data.proof)
       }
     })
+    // eslint-disable-next-line
   }, [proofHandler, mintProofKeys]);
 }
 
@@ -56,6 +55,7 @@ export function useBurnProofEventListener(proofHandler) {
         proofHandler(data.proof)
       }
     })
+    // eslint-disable-next-line
   }, [proofHandler, burnProofKeys]);
 }
 
@@ -84,6 +84,7 @@ export function useTransferProofEventListener(proofHandler) {
         proofHandler(data.proof)
       }
     })
+    // eslint-disable-next-line
   }, [proofHandler, transferProofKeys]);
 }
 

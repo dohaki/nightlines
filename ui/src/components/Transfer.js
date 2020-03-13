@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Text, Flex, Box } from "rebass";
 import { Input } from "@rebass/forms";
 import { get } from "lodash";
@@ -54,7 +54,6 @@ const getJoinSplitOutputs = async (inputCommitments, transferValueRaw, decimals)
 export default function Transfer() {
   const [receiverPK, setReceiverPK] = useState("");
   const [transferValue, setTransferValue] = useState(0);
-  const [isVKRegistered, setVKRegistered] = useState(false);
   const [loading, setLoading] = useState(false);
   const {
     selectedNetwork,
@@ -70,20 +69,6 @@ export default function Transfer() {
   const zkpPublicKey = get(loadedUser, "zkpKeyPair.zkpPublicKey");
   const zkpPrivateKey = get(loadedUser, "zkpKeyPair.zkpPrivateKey");
 
-  useEffect(() => {
-    async function getRegisteredTransferVK() {
-      const registeredTransferVK = await tlLib.getRegisteredVK(
-        shieldAddress,
-        "transfer"
-      );
-      setVKRegistered(registeredTransferVK.length > 0);
-    }
-
-    if (shieldAddress) {
-      getRegisteredTransferVK();
-    }
-  }, [shieldAddress, setVKRegistered]);
-
   const handleClick = async () => {
     try {
       setLoading(true);
@@ -95,17 +80,6 @@ export default function Transfer() {
       if (joinSplitInputs.length < 2) {
         throw new Error("Insufficient commitments minted");
       }
-
-      // set status of used input commitments to PENDING
-      // await Promise.all(
-      //   joinSplitInputs.map(input =>
-      //     localforage.setCommitmentStatus(
-      //       username,
-      //       input.commitment,
-      //       localforage.COMMITMENT_STATUS.PENDING
-      //     )
-      //   )
-      // )
 
       const joinSplitOutputs = await getJoinSplitOutputs(
         joinSplitInputs,
@@ -199,17 +173,6 @@ export default function Transfer() {
     webSocket.send(JSON.stringify(commitmentE))
   }
 
-  const handleRegisterVK = async () => {
-    if (!isVKRegistered) {
-      await tlLib.registerVK(
-        shieldAddress,
-        "transfer"
-      );
-      toast(`Transfer VK successfully registered`, { type: "success" });
-      setVKRegistered(true);
-    }
-  }
-
   return (
     <Box mt={4}>
       <Text color={"primary"}>ZKP PubKey Receiver</Text>
@@ -235,13 +198,6 @@ export default function Transfer() {
           />
         </Box>
         <Box>
-          <Text
-            onClick={handleRegisterVK}
-            color={isVKRegistered && "background"}
-            textAlign={"center"}
-          >
-            Register VK
-          </Text>
           <Button
             loading={loading}
             onClick={handleClick}
