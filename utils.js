@@ -330,7 +330,7 @@ export function binToHex(binStr) {
 
 // Converts decimal value strings to hex values
 export function decToHex(decStr) {
-  const hex = convertBase(decStr, 10, 16);
+  const hex = convertBase(String(decStr), 10, 16);
   return hex ? `0x${hex}` : null;
 }
 

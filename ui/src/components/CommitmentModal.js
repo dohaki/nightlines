@@ -9,6 +9,8 @@ import Burn from "./Burn"
 
 import store from "../store";
 
+import { COMMITMENT_STATUS } from '../apis/localforage'
+
 function CommitmentRow({ title, content }) {
   return (
     <Flex
@@ -131,9 +133,9 @@ export default function CommitmentModal({ commitment, ...props }) {
         content={note.status}
       />
       <GasUsage gasUsed={note.gasUsed} />
-      {note.status === "UNSPENT" ? (
+      {note.status === COMMITMENT_STATUS.UNSPENT ? (
         <Burn note={note} />
-      ) : note.status === "SENT" ? (
+      ) : note.status === COMMITMENT_STATUS.SENT ? (
         <Box>SEND ON SECURE OFF</Box>
       ) : (
         <Box />

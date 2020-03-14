@@ -122,7 +122,7 @@ export default function Mint() {
           onChange={event => setMintValue(event.target.value)}
         />
       </Box>
-      <Box>
+      <Box alignSelf={"end"}>
         <Button
           loading={loading}
           onClick={handleClick}

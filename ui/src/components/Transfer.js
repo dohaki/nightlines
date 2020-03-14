@@ -8,6 +8,9 @@ import * as tlUtils from "trustlines-clientlib/lib-esm/utils";
 import Button from "./Button";
 
 import store from "../store";
+import {
+  useTransferProofEventListener
+} from "../hooks/useProofEventListener";
 
 import * as tlLib from "../apis/tlLib";
 import * as nightlines from "../apis/nightlines";
@@ -60,6 +63,7 @@ export default function Transfer() {
     loadedUser,
     fetchCommitments,
     commitments,
+    addTransferProofKey,
     webSocket
   } = store.useContainer();
 
@@ -96,13 +100,7 @@ export default function Transfer() {
       );
       
       if (typeof transferProofOrKey === "string") {
-        webSocket.addEventListener("message", event => {
-          const { data } = event;
-          const dataJson = JSON.parse(data);
-          if (dataJson.proofKey === transferProofOrKey && dataJson.proof) {
-            sendTransferProof(dataJson.proof);
-          }
-        })
+        addTransferProofKey(transferProofOrKey)
       } else {
         sendTransferProof(transferProofOrKey);
       }
@@ -173,6 +171,8 @@ export default function Transfer() {
     webSocket.send(JSON.stringify(commitmentE))
   }
 
+  useTransferProofEventListener(sendTransferProof);
+
   return (
     <Box mt={4}>
       <Text color={"primary"}>ZKP PubKey Receiver</Text>
@@ -197,7 +197,7 @@ export default function Transfer() {
             onChange={event => setTransferValue(event.target.value)}
           />
         </Box>
-        <Box>
+        <Box alignSelf={"end"}>
           <Button
             loading={loading}
             onClick={handleClick}
