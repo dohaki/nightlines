@@ -13,7 +13,7 @@ const PROVING_SCHEME = "gm17";
 // TODO: Make generic
 export function getZokratesInputDirAndFilePaths() {
   const dirNames = ["iou-burn", "iou-mint", "iou-transfer"];
-  // const dirNames = ["iou-transfer"];
+  // const dirNames = ["iou-mint"];
   return dirNames.map(dirName => {
     const dirPath = `${shell.pwd().stdout}/zokrates/${dirName}`;
     // Assuming same input file name as input dir name for now

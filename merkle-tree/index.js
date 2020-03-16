@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+import axios from "axios";
 import ethers from "ethers";
 
 import * as utils from "./utils.js";
@@ -18,11 +18,10 @@ const relayUrl = `${config.RELAY_HOST}:${config.RELAY_PORT}/api/v1`;
  * }>}
  */
 async function getLeafByLeafIndex(shieldContractAddress, leafIndex) {
-  const leafResponse = await fetch(
+  const { data } = await axios.get(
     `${relayUrl}/shields/${shieldContractAddress}/leaves?leafIndex=${leafIndex}`
   );
-  const leaf = await leafResponse.json();
-  return leaf;
+  return data;
 }
 
 /**
@@ -38,12 +37,11 @@ async function getSiblingPathByLeafIndex(shieldContractAddress, leafIndex) {
   const nodeIndex = utils.leafIndexToNodeIndex(leafIndex);
 
   const siblingPathIndices = utils.getSiblingPathIndices(nodeIndex);
-  const nodesResponse = await fetch(
+  const { data: nodes } = await axios.get(
     `${relayUrl}/shields/${shieldContractAddress}/nodes?nodeIndices=${siblingPathIndices.join(
       ","
     )}`
   );
-  const nodes = await nodesResponse.json();
 
   // Check whether some nodeIndices don't yet exist in the db. If they don't, we'll presume their values are zero, and add these to the 'nodes' before returning them.
   const complementedNodes = siblingPathIndices.map(siblingNodeIndex => {

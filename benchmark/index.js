@@ -5,6 +5,7 @@ import chalk from "chalk";
 import config from "../config/index.js";
 
 import { benchmarkGateway } from "./benchmark-gateway.js";
+import { benchmarkZok, zokStep } from "./benchmark-zokrates.js";
 import { writeToCsv } from "./utils.js";
 
 const provider = new ethers.providers.JsonRpcProvider(
@@ -39,8 +40,20 @@ async function start() {
   await createAndLoadUsers(tlInstances);
   await loadCoins(tlInstances);
 
-  const data = await benchmarkGateway(tl1);
-  writeToCsv("gateway.csv", data);
+  const gatewaBenchmarkData = await benchmarkGateway(tl1);
+  writeToCsv("gateway.csv", gatewaBenchmarkData);
+
+  const zokCompileBenchmarkData = await benchmarkZok(zokStep.COMPILE);
+  writeToCsv(`zokrates-${zokStep.COMPILE}.csv`, zokCompileBenchmarkData);
+
+  const zokSetupBenchmarkData = await benchmarkZok(zokStep.SETUP);
+  writeToCsv(`zokrates-${zokStep.SETUP}.csv`, zokSetupBenchmarkData);
+
+  const zokWitnessBenchmarkData = await benchmarkZok(zokStep.WITNESS);
+  writeToCsv(`zokrates-${zokStep.WITNESS}.csv`, zokWitnessBenchmarkData);
+
+  const zokProofBenchmarkData = await benchmarkZok(zokStep.PROOF);
+  writeToCsv(`zokrates-${zokStep.PROOF}.csv`, zokProofBenchmarkData);
 }
 
 try {
