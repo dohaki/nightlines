@@ -5,6 +5,7 @@ import chalk from "chalk";
 import config from "../config/index.js";
 
 import { benchmarkGateway } from "./benchmark-gateway.js";
+import { writeToCsv } from "./utils.js";
 
 const provider = new ethers.providers.JsonRpcProvider(
   `http://${config.RPC_PROVIDER_HOST}:${config.RPC_PROVIDER_PORT}`
@@ -38,7 +39,8 @@ async function start() {
   await createAndLoadUsers(tlInstances);
   await loadCoins(tlInstances);
 
-  benchmarkGateway(tl1);
+  const data = await benchmarkGateway(tl1);
+  writeToCsv("gateway.csv", data);
 }
 
 try {

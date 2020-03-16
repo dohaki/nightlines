@@ -112,3 +112,6 @@ dist
 *-witness
 *-proof.json
 *-abi.json
+
+# benchmark data
+benchmark/data/

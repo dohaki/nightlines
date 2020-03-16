@@ -44,5 +44,5 @@ export async function benchmarkGateway(tlNetwork, n = 1) {
     );
   }
 
-  return csvArray;
+  return csvArray.join("\n");
 }
