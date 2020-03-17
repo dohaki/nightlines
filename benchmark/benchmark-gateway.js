@@ -8,7 +8,7 @@ const provider = new ethers.providers.JsonRpcProvider(
   `${config.RPC_PROVIDER_HOST}:${config.RPC_PROVIDER_PORT}`
 );
 
-async function getGateways(relayApiUrl) {
+export async function getGateways(relayApiUrl) {
   const { data } = await axios.get(`${relayApiUrl}/gateways`);
   return data;
 }
@@ -40,7 +40,7 @@ export async function benchmarkGateway(tlNetwork, n = 1) {
     );
 
     csvArray.push(
-      `openCollateralizedTrustline, ${openTxReceipt.gasUsed.toString()}`
+      `openCollateralizedTrustline,${openTxReceipt.gasUsed.toString()}`
     );
   }
 

@@ -6,6 +6,7 @@ import config from "../config/index.js";
 
 import { benchmarkGateway } from "./benchmark-gateway.js";
 import { benchmarkZok, zokStep } from "./benchmark-zokrates.js";
+import { benchmarkShield } from "./benchmark-shield.js";
 import { writeToCsv } from "./utils.js";
 
 const provider = new ethers.providers.JsonRpcProvider(
@@ -40,20 +41,23 @@ async function start() {
   await createAndLoadUsers(tlInstances);
   await loadCoins(tlInstances);
 
-  const gatewaBenchmarkData = await benchmarkGateway(tl1);
-  writeToCsv("gateway.csv", gatewaBenchmarkData);
+  const shieldBenchmarkData = await benchmarkShield(tlInstances, 100);
+  writeToCsv("shield.csv", shieldBenchmarkData);
 
-  const zokCompileBenchmarkData = await benchmarkZok(zokStep.COMPILE);
-  writeToCsv(`zokrates-${zokStep.COMPILE}.csv`, zokCompileBenchmarkData);
+  // const gatewaBenchmarkData = await benchmarkGateway(tl1);
+  // writeToCsv("gateway.csv", gatewaBenchmarkData);
 
-  const zokSetupBenchmarkData = await benchmarkZok(zokStep.SETUP);
-  writeToCsv(`zokrates-${zokStep.SETUP}.csv`, zokSetupBenchmarkData);
+  // const zokCompileBenchmarkData = await benchmarkZok(zokStep.COMPILE);
+  // writeToCsv(`zokrates-${zokStep.COMPILE}.csv`, zokCompileBenchmarkData);
 
-  const zokWitnessBenchmarkData = await benchmarkZok(zokStep.WITNESS);
-  writeToCsv(`zokrates-${zokStep.WITNESS}.csv`, zokWitnessBenchmarkData);
+  // const zokSetupBenchmarkData = await benchmarkZok(zokStep.SETUP);
+  // writeToCsv(`zokrates-${zokStep.SETUP}.csv`, zokSetupBenchmarkData);
 
-  const zokProofBenchmarkData = await benchmarkZok(zokStep.PROOF);
-  writeToCsv(`zokrates-${zokStep.PROOF}.csv`, zokProofBenchmarkData);
+  // const zokWitnessBenchmarkData = await benchmarkZok(zokStep.WITNESS);
+  // writeToCsv(`zokrates-${zokStep.WITNESS}.csv`, zokWitnessBenchmarkData);
+
+  // const zokProofBenchmarkData = await benchmarkZok(zokStep.PROOF);
+  // writeToCsv(`zokrates-${zokStep.PROOF}.csv`, zokProofBenchmarkData);
 }
 
 try {
