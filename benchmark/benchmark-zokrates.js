@@ -13,7 +13,7 @@ export async function benchmarkZok(step, n = 1) {
   console.log(`\nStarting benchmark for ${chalk.green(`*.zok ${step}`)}...`);
 
   const zokratesInputDirAndFilePaths = zokrates.getZokratesInputDirAndFilePaths();
-  const csvArray = ["step,file,time(in ms)"];
+  const csvArray = ["step,file,time(in ms),memory(in KB)"];
 
   for (const i of Array(zokratesInputDirAndFilePaths.length).keys()) {
     const { dirPath, filePath } = zokratesInputDirAndFilePaths[i];
@@ -39,10 +39,22 @@ export async function benchmarkZok(step, n = 1) {
         default:
           break;
       }
-
+      const memoryUsage = process.memoryUsage().heapUsed / 1024;
       const endTime = new Date();
 
-      csvArray.push(`${step},${fileName},${endTime - startTime}`);
+      console.log({
+        count: j,
+        step,
+        fileName,
+        time: endTime - startTime,
+        memory: Math.round((memoryUsage * 100) / 100)
+      });
+
+      csvArray.push(
+        `${step},${fileName},${endTime - startTime},${Math.round(
+          (memoryUsage * 100) / 100
+        )}`
+      );
     }
   }
 
