@@ -15,7 +15,7 @@ export async function getGateways(relayApiUrl) {
 
 export async function benchmarkGateway(tlNetwork, n = 1) {
   console.log(
-    `\nStarting benchmark for ${chalk.green("CurrencyNetworkGateway")}...`
+    `\n▶️ Starting benchmark for ${chalk.green(`CurrencyNetworkGateway`)}`
   );
 
   const [gateway] = await getGateways(tlNetwork.provider.relayApiUrl);
@@ -34,15 +34,18 @@ export async function benchmarkGateway(tlNetwork, n = 1) {
     const openTxHash = await tlNetwork.trustline.confirm(openRawTx);
     const openTxReceipt = await provider.getTransactionReceipt(openTxHash);
 
-    console.log(`Method:\t ${chalk.green("openCollateralizedTrustline")}`);
-    console.log(
-      `Gas used:\t ${chalk.yellow(openTxReceipt.gasUsed.toString())}`
-    );
+    console.log(`\n=> Measurements of run ${chalk.yellow(i + 1)}:`, {
+      method: "openCollateralizedTrustline",
+      gas: openTxReceipt.gasUsed.toNumber()
+    });
 
     csvArray.push(
       `openCollateralizedTrustline,${openTxReceipt.gasUsed.toString()}`
     );
   }
 
+  console.log(
+    `\n▶️ Benchmark for ${chalk.green(`CurrencyNetworkGateway`)} done.`
+  );
   return csvArray.join("\n");
 }
