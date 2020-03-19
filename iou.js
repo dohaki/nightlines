@@ -155,6 +155,14 @@ export async function transfer(
     String(inputCommitments[1].amount.raw),
     32
   );
+  inputCommitments[0].commitmentIndexHex = utils.decToPaddedHex(
+    String(inputCommitments[0].commitmentIndex),
+    32
+  );
+  inputCommitments[1].commitmentIndexHex = utils.decToPaddedHex(
+    String(inputCommitments[1].commitmentIndex),
+    32
+  );
   outputCommitments[0].amountHex = utils.decToPaddedHex(
     String(outputCommitments[0].amount.raw),
     32
@@ -359,11 +367,21 @@ export async function transfer(
     utils.toProofElement(zkpPrivateKeySender, "field"),
     utils.toProofElement(inputCommitments[0].salt, "field"),
     ...inputCommitments[0].siblingPathElements.slice(1),
-    utils.toProofElement(inputCommitments[0].commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
+    utils.toProofElement(
+      inputCommitments[0].commitmentIndexHex,
+      "field",
+      128,
+      1
+    ), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
     utils.toProofElement(inputCommitments[1].amountHex, "field", 128, 1),
     utils.toProofElement(inputCommitments[1].salt, "field"),
     ...inputCommitments[1].siblingPathElements.slice(1),
-    utils.toProofElement(inputCommitments[1].commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
+    utils.toProofElement(
+      inputCommitments[1].commitmentIndexHex,
+      "field",
+      128,
+      1
+    ), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
     utils.toProofElement(inputCommitments[0].nullifier, "field"),
     utils.toProofElement(inputCommitments[1].nullifier, "field"),
     utils.toProofElement(outputCommitments[0].amountHex, "field", 128, 1),
@@ -673,6 +691,10 @@ export async function burn(
   );
 
   const amountHex = utils.decToPaddedHex(String(commitment.amount.raw), 32);
+  const commitmentIndexHex = utils.decToPaddedHex(
+    String(commitment.commitmentIndex),
+    32
+  );
 
   // Get the sibling-path from the token commitments (leaves) to the root. Express each node as an Element class.
   const siblingPath = await merkleTree.getSiblingPath(
@@ -747,7 +769,7 @@ export async function burn(
     utils.toProofElement(zkpPrivateKeyOwner, "field"),
     utils.toProofElement(commitment.salt, "field"),
     ...siblingPathElements.slice(1),
-    utils.toProofElement(commitment.commitmentIndex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
+    utils.toProofElement(commitmentIndexHex, "field", 128, 1), // the binary decomposition of a leafIndex gives its path's 'left-right' positions up the tree. The decomposition is done inside the circuit.,
     utils.toProofElement(nullifier, "field"),
     utils.toProofElement(root, "field")
   ]);
@@ -795,29 +817,6 @@ export async function burn(
     proof,
     nullifier
   };
-
-  // // Burn the commitment and return tokens to the payTo account.
-  // const txReceipt = await fTokenShieldInstance.burn(
-  //   proof,
-  //   publicInputs,
-  //   root,
-  //   nullifier,
-  //   amount,
-  //   payTo,
-  //   {
-  //     from: account,
-  //     gas: 6500000,
-  //     gasPrice: config.GASPRICE
-  //   }
-  // );
-  // utils.gasUsedStats(txReceipt, "burn");
-
-  // const newRoot = await fTokenShieldInstance.latestRoot();
-  // console.log(`Merkle Root after burn: ${newRoot}`);
-
-  // console.log("BURN COMPLETE\n");
-
-  // return { z_C: commitment, z_C_index: commitmentIndex, txReceipt };
 }
 
 // module.exports = {
