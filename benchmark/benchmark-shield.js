@@ -78,7 +78,7 @@ async function registerAllVKs(tlInstance, shieldAddress) {
       }
     );
     await tlInstance.transaction.confirm(rawTx);
-    console.log(`▶️ Register VK for ${type} ✔️`);
+    console.log(`=> Register VK for ${type} ✔️`);
   }
 
   await wait();
@@ -289,6 +289,43 @@ async function transfer({
   };
 }
 
+async function burn({ tlInstance, shieldAddress, note, zkpPrivateKeyOwner }) {
+  const proof = await iou.burn(
+    shieldAddress,
+    tlInstance.user.address,
+    note,
+    zkpPrivateKeyOwner
+  );
+
+  const { rawTx } = await tlInstance.shield.prepareBurnCommitment(
+    shieldAddress,
+    proof.proof,
+    proof.publicInputs,
+    proof.root,
+    proof.nullifier,
+    note.amount.value,
+    tlInstance.user.address,
+    {
+      gasLimit: "2000000"
+    }
+  );
+  const txHash = await tlInstance.transaction.confirm(rawTx);
+
+  await wait();
+
+  const gasStats = await getGasStatsForTx(
+    tlInstance.provider.relayApiUrl,
+    shieldAddress,
+    txHash
+  );
+
+  return {
+    method: "burn",
+    ...gasStats,
+    note
+  };
+}
+
 export async function benchmarkShield(tlInstances, n = 2) {
   console.log(
     `\n▶️ Starting benchmark for ${chalk.green("CurrencyNetworkShield")}`
@@ -351,7 +388,7 @@ export async function benchmarkShield(tlInstances, n = 2) {
     // save minted note for later usage
     mintedNotes.push(mintData.note);
 
-    console.log(`\n=> Gas usage of run ${i + 1}:`, {
+    console.log(`\n=> ⛏ Gas usage of run ${chalk.yellow(i + 1)}:`, {
       method: "mint",
       totalGas,
       shieldGas,
@@ -396,7 +433,7 @@ export async function benchmarkShield(tlInstances, n = 2) {
     mintedNotes[0] = outputNotes[0];
     mintedNotes[1] = outputNotes[1];
 
-    console.log(`\n=> Gas usage of run ${i + 1}:`, {
+    console.log(`\n=> 💸 Gas usage of run ${chalk.yellow(i + 1)}:`, {
       method: "transfer",
       totalGas,
       shieldGas,
@@ -405,10 +442,36 @@ export async function benchmarkShield(tlInstances, n = 2) {
     });
   }
 
-  // // burn n times
-  // for (const i of Array(n).keys()) {
-  //   // TODO
-  // }
+  // burn n times
+  console.log(
+    `\n▶️ Benchmark ${chalk.green("burn")} by running ${chalk.yellow(n)} times:`
+  );
+  for (const i of Array(n).keys()) {
+    const note = mintedNotes[i];
 
+    const burnData = await burn({
+      tlInstance: A,
+      shieldAddress,
+      note,
+      zkpPrivateKeyOwner: zkpPrivateKey
+    });
+
+    const { totalGas, shieldGas, verifierGas, currencyNetworkGas } = burnData;
+    csvArray.push(
+      `burn,${totalGas},${shieldGas},${verifierGas},${currencyNetworkGas}`
+    );
+
+    console.log(`\n=> 🔥 Gas usage of run ${chalk.yellow(i + 1)}:`, {
+      method: "burn",
+      totalGas,
+      shieldGas,
+      verifierGas,
+      currencyNetworkGas
+    });
+  }
+
+  console.log(
+    `\n▶️ Benchmark for ${chalk.green("CurrencyNetworkShield")} done.`
+  );
   return csvArray.join("\n");
 }
