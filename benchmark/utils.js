@@ -111,7 +111,8 @@ function getAggregatedValuesShield(csvDataAsJson) {
         total: sum.total + Number(data["total gas"]),
         shield: sum.shield + Number(data["shield gas"]),
         verifier: sum.verifier + Number(data["verifier gas"]),
-        currencyNetwork: sum.currencyNetwork + Number(data["currency network gas"])
+        currencyNetwork:
+          sum.currencyNetwork + Number(data["currency network gas"])
       };
     },
     { total: 0, shield: 0, verifier: 0, currencyNetwork: 0 }
