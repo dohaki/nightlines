@@ -81,3 +81,7 @@ To run them, make sure to have the `end2end` setup running and run in the projec
 yarn benchmark [n]
 ```
 where `n` is the number of runs to perform and defaults to `2`.
+
+The generated data is saved as CSV in `./benchmark/data`.
+
+See [./benchmark/README.md](./benchmark/README.md) for details.
