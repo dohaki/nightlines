@@ -3,6 +3,7 @@ import chalk from "chalk";
 
 import config from "../config/index.js";
 
+import { main as setupZokrates } from "../zokrates/setup.js";
 import { benchmarkGateway } from "./benchmark-gateway.js";
 import { benchmarkZok, zokStep } from "./benchmark-zokrates.js";
 import { benchmarkShield } from "./benchmark-shield.js";
@@ -43,11 +44,14 @@ async function start() {
     await createAndLoadUsers(tlInstances);
     await loadCoins(tlInstances);
 
+    // setup zokrates
+    await setupZokrates();
+
     const shieldBenchmarkData = await benchmarkShield(tlInstances, n);
     writeToCsv("shield.csv", shieldBenchmarkData);
 
     // constant gas usage therefore n = 1
-    const gatewaBenchmarkData = await benchmarkGateway(tl1, 1);
+    const gatewaBenchmarkData = await benchmarkGateway(tl1, n);
     writeToCsv("gateway.csv", gatewaBenchmarkData);
 
     const zokCompileBenchmarkData = await benchmarkZok(zokStep.COMPILE, n);

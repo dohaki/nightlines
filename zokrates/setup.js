@@ -1,6 +1,6 @@
 import * as zokrates from "./index.js";
 
-async function main() {
+export async function main() {
   const zokratesInputDirAndFilePaths = zokrates.getZokratesInputDirAndFilePaths();
 
   for (let i = 0; i < zokratesInputDirAndFilePaths.length; i++) {
