@@ -2000,7 +2000,7 @@ toidentifier@1.0.0:
 
 trustlines-clientlib@dakingha69/clientlib.git#nightlines:
   version "0.11.1-0"
-  resolved "https://codeload.github.com/dakingha69/clientlib/tar.gz/1e986a713114336d5b8d4c94782227671861a41b"
+  resolved "https://codeload.github.com/dakingha69/clientlib/tar.gz/da58cf7d05d028ff87514c77074635787124c986"
   dependencies:
     axios "^0.19.2"
     bignumber.js "7.2.1"
