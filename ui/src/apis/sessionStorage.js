@@ -1,8 +1,8 @@
-import { LOCAL_STORAGE_ITEM_PREFIX } from '../constants';
+import { LOCAL_STORAGE_ITEM_PREFIX } from "../constants";
 
 export function getCurrentUsername() {
   return sessionStorage.getItem(
-      `${LOCAL_STORAGE_ITEM_PREFIX}-current-username`
+    `${LOCAL_STORAGE_ITEM_PREFIX}-current-username`
   );
 }
 
@@ -14,7 +14,5 @@ export function setCurrentUsername(username) {
 }
 
 export function removeCurrentUsername() {
-  sessionStorage.removeItem(
-    `${LOCAL_STORAGE_ITEM_PREFIX}-current-username`
-  )
+  sessionStorage.removeItem(`${LOCAL_STORAGE_ITEM_PREFIX}-current-username`);
 }

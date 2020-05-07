@@ -11,12 +11,15 @@ const rotate = keyframes`
     -webkit-transform: rotate(360deg);
             transform: rotate(360deg);
   }
-`
+`;
 
 export default function LoadingSpinner(props) {
   return (
-    <FiLoader css={css`
-      animation: ${rotate} 1s linear infinite both;
-    `} {...props} />
-  )
+    <FiLoader
+      css={css`
+        animation: ${rotate} 1s linear infinite both;
+      `}
+      {...props}
+    />
+  );
 }

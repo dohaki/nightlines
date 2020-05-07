@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 import * as tlLib from "../apis/tlLib";
 
@@ -12,4 +12,3 @@ export default function useCoinBalance() {
 
   return { coinBalance, fetchCoinBalance };
 }
-

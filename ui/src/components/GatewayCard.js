@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { Text, Flex, Box } from "rebass";
 import { Input } from "@rebass/forms";
 import { get } from "lodash";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 import DashboardCard from "./DashboardCard";
 import CopiableText from "./CopiableText";
@@ -32,22 +32,15 @@ export default function GatewayCard() {
 
   useEffect(() => {
     if (gatewayAddress && userAddress) {
-      fetchGatewayDeposit(
-        gatewayAddress,
-        userAddress
-      );
+      fetchGatewayDeposit(gatewayAddress, userAddress);
     }
     // eslint-disable-next-line
   }, [gatewayAddress, userAddress]);
 
   const handleClick = async () => {
-    try {      
+    try {
       setLoading(true);
-      await tlLib.openCollateralized(
-        gatewayAddress,
-        collateral,
-        iouGiven
-      );
+      await tlLib.openCollateralized(gatewayAddress, collateral, iouGiven);
       fetchOverview(iouAddress, userAddress);
       fetchGatewayDeposit(gatewayAddress, userAddress);
       fetchCoinBalance();
@@ -59,26 +52,18 @@ export default function GatewayCard() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <DashboardCard>
       <Text textAlign={"center"} fontWeight={"bold"} mb={2}>
         GATEWAY
       </Text>
-      <Flex
-        justifyContent={"space-between"}
-        overflowX={"hidden"}
-      >
+      <Flex justifyContent={"space-between"} overflowX={"hidden"}>
         <Text>Address:</Text>
-        <CopiableText id={"gateway-address"}>
-          {gatewayAddress}
-        </CopiableText>
+        <CopiableText id={"gateway-address"}>{gatewayAddress}</CopiableText>
       </Flex>
-      <Flex
-        justifyContent={"space-between"}
-        overflowX={"hidden"}
-      >
+      <Flex justifyContent={"space-between"} overflowX={"hidden"}>
         <Text>TLC Deposit:</Text>
         <Text>{gatewayDeposit}</Text>
       </Flex>
@@ -107,15 +92,11 @@ export default function GatewayCard() {
         </Box>
         <Box>
           <Text color={"background"}>{"invisible"}</Text>
-          <Button
-            loading={loading}
-            onClick={handleClick}
-            minWidth={150}
-          >
+          <Button loading={loading} onClick={handleClick} minWidth={150}>
             Deposit
           </Button>
         </Box>
       </Flex>
     </DashboardCard>
-  )
-};
+  );
+}

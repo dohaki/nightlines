@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function useWebSocket() {
   const [webSocket, setWebSocket] = useState();

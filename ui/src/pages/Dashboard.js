@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import { Select } from "@rebass/forms";
 import { Box, Flex } from "rebass";
 
-import NavBar from '../components/NavBar'
-import OverviewCard from '../components/OverviewCard'
-import GatewayCard from '../components/GatewayCard'
-import ShieldCard from '../components/ShieldCard'
-import CommitmentsCard from '../components/CommitmentsCard'
+import NavBar from "../components/NavBar";
+import OverviewCard from "../components/OverviewCard";
+import GatewayCard from "../components/GatewayCard";
+import ShieldCard from "../components/ShieldCard";
+import CommitmentsCard from "../components/CommitmentsCard";
 
 import store from "../store";
 import * as sessionStorage from "../apis/sessionStorage";
@@ -22,14 +22,14 @@ export default function Dashboard() {
     networks,
     fetchNetworks,
     createWebSocket,
-    closeWebSocket,
+    closeWebSocket
   } = store.useContainer();
 
   useEffect(() => {
     // check if logged in user in session and load
     const currentUsername = sessionStorage.getCurrentUsername();
     if (!currentUsername) {
-      history.replace("/login")
+      history.replace("/login");
     } else {
       loadUserByUsername(currentUsername);
       fetchNetworks();
@@ -41,32 +41,33 @@ export default function Dashboard() {
     if (networks.length > 0) {
       setSelectedNetwork(networks[selectedNetworkIndex]);
     }
-  }, [selectedNetworkIndex, networks, setSelectedNetwork])
+  }, [selectedNetworkIndex, networks, setSelectedNetwork]);
 
   useEffect(() => {
     createWebSocket();
     return () => closeWebSocket();
     // eslint-disable-next-line
-  }, [])
+  }, []);
 
   return (
     <>
       <NavBar />
       <Box p={4} pb={0}>
         <Select
-          id='network'
-          name='network'
-          onChange={event => setSelectedNetworkIndex(event.target.selectedIndex)}
+          id="network"
+          name="network"
+          onChange={event =>
+            setSelectedNetworkIndex(event.target.selectedIndex)
+          }
         >
           {networks.map((network, i) => (
-            <option
-              key={i}>
+            <option key={i}>
               {network.name} ({network.address})
             </option>
           ))}
         </Select>
       </Box>
-      <Box mx='auto' />
+      <Box mx="auto" />
       {loadedUser ? (
         <Flex justifyContent={"space-between"} flexWrap={"wrap"}>
           <OverviewCard />
@@ -76,5 +77,5 @@ export default function Dashboard() {
         </Flex>
       ) : null}
     </>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import { Text, Flex } from "rebass";
 import { get } from "lodash";
 
@@ -31,9 +31,9 @@ export default function OverviewCard() {
       fetchOverview(iouAddress, userAddress);
     }
     // eslint-disable-next-line
-  }, [userAddress, iouAddress])
+  }, [userAddress, iouAddress]);
 
-  const available = Number(get(overview, "leftReceived.value", 0))
+  const available = Number(get(overview, "leftReceived.value", 0));
 
   return (
     <DashboardCard>
@@ -42,21 +42,15 @@ export default function OverviewCard() {
       </Text>
       <Flex justifyContent={"space-between"}>
         <Text>Address:</Text>
-        <CopiableText id={"user-address"}>
-          {userAddress}
-        </CopiableText>
+        <CopiableText id={"user-address"}>{userAddress}</CopiableText>
       </Flex>
       <Flex justifyContent={"space-between"} color={"primary"}>
         <Text>ZKP PubKey:</Text>
-        <CopiableText id={"zkp-public-key"}>
-          {zkpPublicKey}
-        </CopiableText>
+        <CopiableText id={"zkp-public-key"}>{zkpPublicKey}</CopiableText>
       </Flex>
       <Flex justifyContent={"space-between"} color={"primary"}>
         <Text>ZKP PrivKey:</Text>
-        <CopiableText id={"zkp-private-key"}>
-          {zkpPrivateKey}
-        </CopiableText>
+        <CopiableText id={"zkp-private-key"}>{zkpPrivateKey}</CopiableText>
       </Flex>
       <Flex justifyContent={"space-between"}>
         <Text>TLC Balance:</Text>
@@ -78,5 +72,5 @@ export default function OverviewCard() {
         <Text>{available}</Text>
       </Flex>
     </DashboardCard>
-  )
-};
+  );
+}

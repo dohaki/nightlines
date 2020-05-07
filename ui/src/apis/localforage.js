@@ -4,12 +4,12 @@ export const COMMITMENT_STATUS = {
   UNSPENT: "unspent",
   SPENT: "spent",
   PENDING: "pending",
-  SENT: "sent",
-}
+  SENT: "sent"
+};
 
 /**
- * 
- * @param {string} name 
+ *
+ * @param {string} name
  */
 export function createInstance(name) {
   if (!name) {
@@ -17,12 +17,12 @@ export function createInstance(name) {
   }
   return localforage.createInstance({
     name: name.toLowerCase()
-  })
+  });
 }
 
 /**
- * 
- * @param {*} username 
+ *
+ * @param {*} username
  * @returns {Promise<{
  *  username: string,
  *  walletData: any,
@@ -35,7 +35,6 @@ export async function getUserByUsername(username = "") {
   const instance = createInstance(username);
   return instance.getItem("user");
 }
-
 
 export async function setUser({ username, walletData, zkpKeyPair }) {
   const instance = createInstance(username);

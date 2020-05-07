@@ -1,4 +1,4 @@
-import { createContainer } from "unstated-next"
+import { createContainer } from "unstated-next";
 
 import useCoinBalance from "./hooks/useCoinBalance";
 import useGatewayDeposit from "./hooks/useGatewayDeposit";
@@ -14,29 +14,30 @@ import {
   useMintProofKeys
 } from "./hooks/useProofKeys";
 
-const composeHooks = (...hooks) => () => hooks.reduce(
-  (acc, hook) => {
+const composeHooks = (...hooks) => () =>
+  hooks.reduce((acc, hook) => {
     const hookObj = hook();
     if (Object.keys(acc).every(key => hookObj[key] === undefined)) {
-      return {...acc, ...hookObj}
+      return { ...acc, ...hookObj };
     } else {
-      throw new Error('there exist same key in multiple hooks');
+      throw new Error("there exist same key in multiple hooks");
     }
-  }, {}
-);
+  }, {});
 
-const store = createContainer(composeHooks(
-  useCoinBalance,
-  useGatewayDeposit,
-  useUserOverview,
-  useSelectedNetwork,
-  useLoadedUser,
-  useNetworks,
-  useCommitments,
-  useWebSocket,
-  useBurnProofKeys,
-  useTransferProofKeys,
-  useMintProofKeys
-));
+const store = createContainer(
+  composeHooks(
+    useCoinBalance,
+    useGatewayDeposit,
+    useUserOverview,
+    useSelectedNetwork,
+    useLoadedUser,
+    useNetworks,
+    useCommitments,
+    useWebSocket,
+    useBurnProofKeys,
+    useTransferProofKeys,
+    useMintProofKeys
+  )
+);
 
 export default store;

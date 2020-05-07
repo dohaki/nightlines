@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { Card } from "rebass";
 
 export default function DashboardCard(props) {
@@ -8,9 +8,9 @@ export default function DashboardCard(props) {
       p={3}
       sx={{
         minWidth: 512,
-        boxShadow: 'dashboardCard'
+        boxShadow: "dashboardCard"
       }}
       {...props}
     />
-  )
-};
+  );
+}

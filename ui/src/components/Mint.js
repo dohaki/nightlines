@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Text, Flex, Box } from "rebass";
 import { Input } from "@rebass/forms";
 import { get } from "lodash";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import * as tlUtils from "trustlines-clientlib/lib-esm/utils";
 
 import Button from "./Button";
 
-import {
-  useMintProofEventListener
-} from "../hooks/useProofEventListener";
+import { useMintProofEventListener } from "../hooks/useProofEventListener";
 import store from "../store";
 
 import * as tlLib from "../apis/tlLib";
@@ -24,7 +22,7 @@ export default function Mint() {
     loadedUser,
     fetchOverview,
     fetchCommitments,
-    addMintProofKey,
+    addMintProofKey
   } = store.useContainer();
 
   const shieldAddress = get(selectedNetwork, "shield.address");
@@ -48,25 +46,25 @@ export default function Mint() {
       );
 
       if (typeof mintProofOrKey === "string") {
-        addMintProofKey(mintProofOrKey)
+        addMintProofKey(mintProofOrKey);
       }
 
       if (typeof mintProofOrKey === "object") {
-        handleMintProof(mintProofOrKey)
+        handleMintProof(mintProofOrKey);
       }
     } catch (error) {
       console.log(error);
       toast(error.toString(), { type: "error" });
       setLoading(false);
     }
-  }
+  };
 
   const handleMintProof = async mintProof => {
-    try {      
+    try {
       toast(`Mint proof generated`, { type: "info" });
-      console.log({ mintProof })
+      console.log({ mintProof });
       const { decimals } = await tlLib.getShieldedNetwork(shieldAddress);
-  
+
       const mintCommitment = await tlLib.mintCommitment(
         shieldAddress,
         mintProof.proof,
@@ -74,25 +72,22 @@ export default function Mint() {
         mintValue,
         mintProof.commitment
       );
-  
-      const storedCommitment = await localforage.setCommitment(
-        username,
-        {
-          shieldAddress,
-          zkpPublicKey, 
-          commitmentIndex: mintCommitment.commitmentIndex,
-          commitment: mintProof.commitment,
-          salt: mintProof.salt,
-          amount: {
-            value: mintValue,
-            raw: mintProof.amount,
-            decimals
-          },
-          type: "mint",
-          status: localforage.COMMITMENT_STATUS.UNSPENT,
-          gasUsed: mintCommitment.gasUsed
-        }
-      );
+
+      const storedCommitment = await localforage.setCommitment(username, {
+        shieldAddress,
+        zkpPublicKey,
+        commitmentIndex: mintCommitment.commitmentIndex,
+        commitment: mintProof.commitment,
+        salt: mintProof.salt,
+        amount: {
+          value: mintValue,
+          raw: mintProof.amount,
+          decimals
+        },
+        type: "mint",
+        status: localforage.COMMITMENT_STATUS.UNSPENT,
+        gasUsed: mintCommitment.gasUsed
+      });
       console.log("stored mint note", storedCommitment);
       toast("Successfully minted note", { type: "success" });
       fetchOverview(iouAddress, userAddress);
@@ -104,9 +99,9 @@ export default function Mint() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  useMintProofEventListener(handleMintProof)
+  useMintProofEventListener(handleMintProof);
 
   return (
     <Flex mt={3} justifyContent={"space-between"}>
@@ -123,14 +118,10 @@ export default function Mint() {
         />
       </Box>
       <Box alignSelf={"end"}>
-        <Button
-          loading={loading}
-          onClick={handleClick}
-          minWidth={150}
-        >
+        <Button loading={loading} onClick={handleClick} minWidth={150}>
           Mint
         </Button>
       </Box>
     </Flex>
-  )
-};
+  );
+}

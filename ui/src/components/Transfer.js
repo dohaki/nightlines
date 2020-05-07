@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Text, Flex, Box } from "rebass";
 import { Input } from "@rebass/forms";
 import { get } from "lodash";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import * as tlUtils from "trustlines-clientlib/lib-esm/utils";
 
 import Button from "./Button";
 
 import store from "../store";
-import {
-  useTransferProofEventListener
-} from "../hooks/useProofEventListener";
+import { useTransferProofEventListener } from "../hooks/useProofEventListener";
 
 import * as tlLib from "../apis/tlLib";
 import * as nightlines from "../apis/nightlines";
 import * as localforage from "../apis/localforage";
 
 const getJoinSplitInputs = (commitments, valueRaw) => {
-  const unspentCommitments = commitments.filter(({ status }) => status === "unspent");
+  const unspentCommitments = commitments.filter(
+    ({ status }) => status === "unspent"
+  );
   for (const [i, commitment] of unspentCommitments.entries()) {
     const delta = Number(valueRaw) - Number(commitment.amount.raw);
 
@@ -30,14 +30,20 @@ const getJoinSplitInputs = (commitments, valueRaw) => {
     }
   }
   return [];
-}
+};
 
-const getJoinSplitOutputs = async (inputCommitments, transferValueRaw, decimals) => {
+const getJoinSplitOutputs = async (
+  inputCommitments,
+  transferValueRaw,
+  decimals
+) => {
   const salts = await Promise.all([
     nightlines.getRandomSalt(),
     nightlines.getRandomSalt()
   ]);
-  const totalInputValuesRaw = Number(inputCommitments[0].amount.raw) + Number(inputCommitments[1].amount.raw);
+  const totalInputValuesRaw =
+    Number(inputCommitments[0].amount.raw) +
+    Number(inputCommitments[1].amount.raw);
 
   return [
     {
@@ -51,8 +57,8 @@ const getJoinSplitOutputs = async (inputCommitments, transferValueRaw, decimals)
         decimals
       )
     }
-  ]
-}
+  ];
+};
 
 export default function Transfer() {
   const [receiverPK, setReceiverPK] = useState("");
@@ -77,7 +83,9 @@ export default function Transfer() {
     try {
       setLoading(true);
       const { decimals } = await tlLib.getShieldedNetwork(shieldAddress);
-      const transferValueRaw = tlUtils.calcRaw(transferValue, decimals).toString();
+      const transferValueRaw = tlUtils
+        .calcRaw(transferValue, decimals)
+        .toString();
 
       const joinSplitInputs = getJoinSplitInputs(commitments, transferValueRaw);
 
@@ -98,9 +106,9 @@ export default function Transfer() {
         receiverPK,
         zkpPrivateKey
       );
-      
+
       if (typeof transferProofOrKey === "string") {
-        addTransferProofKey(transferProofOrKey)
+        addTransferProofKey(transferProofOrKey);
       } else {
         sendTransferProof(transferProofOrKey);
       }
@@ -108,7 +116,7 @@ export default function Transfer() {
       console.error(error);
       toast(error.toString(), { type: "error" });
     }
-  }
+  };
 
   const sendTransferProof = async proof => {
     const { noteE, noteF } = await tlLib.transferCommitment(
@@ -119,7 +127,7 @@ export default function Transfer() {
       proof.inputCommitments[0].nullifier,
       proof.inputCommitments[1].nullifier,
       proof.outputCommitments[0].commitment,
-      proof.outputCommitments[1].commitment,
+      proof.outputCommitments[1].commitment
     );
     const commitmentE = {
       shieldAddress,
@@ -130,8 +138,8 @@ export default function Transfer() {
       amount: proof.outputCommitments[0].amount,
       type: "transfer",
       gasUsed: noteE.gasUsed,
-      status: "sent",
-    }
+      status: "sent"
+    };
     await Promise.all([
       localforage.setCommitmentStatus(
         username,
@@ -144,32 +152,26 @@ export default function Transfer() {
         "spent"
       ),
       // commitment E
-      localforage.setCommitment(
-        username,
-        commitmentE
-      ),
+      localforage.setCommitment(username, commitmentE),
       // commitment F
-      localforage.setCommitment(
-        username,
-        {
-          shieldAddress,
-          zkpPublicKey,
-          commitment: noteF.commitment,
-          commitmentIndex: noteF.commitmentIndex,
-          salt: proof.outputCommitments[1].salt,
-          amount: proof.outputCommitments[1].amount,
-          type: "transfer",
-          gasUsed: noteF.gasUsed,
-          status: "unspent",
-        }
-      )
+      localforage.setCommitment(username, {
+        shieldAddress,
+        zkpPublicKey,
+        commitment: noteF.commitment,
+        commitmentIndex: noteF.commitmentIndex,
+        salt: proof.outputCommitments[1].salt,
+        amount: proof.outputCommitments[1].amount,
+        type: "transfer",
+        gasUsed: noteF.gasUsed,
+        status: "unspent"
+      })
     ]);
     fetchCommitments(username);
     setReceiverPK("");
     setTransferValue(0);
     setLoading(false);
-    webSocket.send(JSON.stringify(commitmentE))
-  }
+    webSocket.send(JSON.stringify(commitmentE));
+  };
 
   useTransferProofEventListener(sendTransferProof);
 
@@ -184,9 +186,7 @@ export default function Transfer() {
       />
       <Flex mt={1} justifyContent={"space-between"}>
         <Box>
-          <Text color={"primary"}>
-            {iouAbbreviation} Transfer Value
-          </Text>
+          <Text color={"primary"}>{iouAbbreviation} Transfer Value</Text>
           <Input
             color={"primary"}
             width={315}
@@ -198,15 +198,11 @@ export default function Transfer() {
           />
         </Box>
         <Box alignSelf={"end"}>
-          <Button
-            loading={loading}
-            onClick={handleClick}
-            minWidth={150}
-          >
+          <Button loading={loading} onClick={handleClick} minWidth={150}>
             Transfer
           </Button>
         </Box>
       </Flex>
     </Box>
-  )
-};
+  );
+}

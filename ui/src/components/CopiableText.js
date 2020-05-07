@@ -1,5 +1,5 @@
-import React from 'react';
-import { Text  } from "rebass";
+import React from "react";
+import { Text } from "rebass";
 
 import { copyToClipboard } from "../utils";
 
@@ -16,7 +16,9 @@ export default function CopiableText(props) {
           cursor: "pointer"
         },
         overflow: "hidden",
-        textOverflow: "ellipsis",
-      }} {...props} />
-  )
+        textOverflow: "ellipsis"
+      }}
+      {...props}
+    />
+  );
 }

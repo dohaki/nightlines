@@ -1,91 +1,80 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 import store from "../store";
 import useEventListener from "./useEventListener";
 
 export function useMintProofEventListener(proofHandler) {
-  const {
-    webSocket,
-    mintProofKeys,
-    removeMintProofKey
-  } = store.useContainer()
+  const { webSocket, mintProofKeys, removeMintProofKey } = store.useContainer();
 
   const { addListener, destroyListener } = useEventListener(
     "message",
     webSocket
-  )
+  );
 
   useEffect(() => {
     if (destroyListener) {
-      destroyListener()
+      destroyListener();
     }
-  
+
     addListener(event => {
-      const data = JSON.parse(event.data)
+      const data = JSON.parse(event.data);
       if (mintProofKeys.includes(data.proofKey)) {
-        removeMintProofKey(data.proofKey)
-        proofHandler(data.proof)
+        removeMintProofKey(data.proofKey);
+        proofHandler(data.proof);
       }
-    })
+    });
     // eslint-disable-next-line
   }, [proofHandler, mintProofKeys]);
 }
 
 export function useBurnProofEventListener(proofHandler) {
-  const {
-    webSocket,
-    burnProofKeys,
-    removeBurnProofKey
-  } = store.useContainer()
+  const { webSocket, burnProofKeys, removeBurnProofKey } = store.useContainer();
 
   const { addListener, destroyListener } = useEventListener(
     "message",
     webSocket
-  )
+  );
 
   useEffect(() => {
     if (destroyListener) {
-      destroyListener()
+      destroyListener();
     }
-  
+
     addListener(event => {
-      const data = JSON.parse(event.data)
+      const data = JSON.parse(event.data);
       if (burnProofKeys.includes(data.proofKey)) {
-        removeBurnProofKey(data.proofKey)
-        proofHandler(data.proof)
+        removeBurnProofKey(data.proofKey);
+        proofHandler(data.proof);
       }
-    })
+    });
     // eslint-disable-next-line
   }, [proofHandler, burnProofKeys]);
 }
-
 
 export function useTransferProofEventListener(proofHandler) {
   const {
     webSocket,
     transferProofKeys,
     removeTransferProofKey
-  } = store.useContainer()
+  } = store.useContainer();
 
   const { addListener, destroyListener } = useEventListener(
     "message",
     webSocket
-  )
+  );
 
   useEffect(() => {
     if (destroyListener) {
-      destroyListener()
+      destroyListener();
     }
-  
+
     addListener(event => {
-      const data = JSON.parse(event.data)
+      const data = JSON.parse(event.data);
       if (transferProofKeys.includes(data.proofKey)) {
-        removeTransferProofKey(data.proofKey)
-        proofHandler(data.proof)
+        removeTransferProofKey(data.proofKey);
+        proofHandler(data.proof);
       }
-    })
+    });
     // eslint-disable-next-line
   }, [proofHandler, transferProofKeys]);
 }
-
-

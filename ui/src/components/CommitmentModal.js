@@ -1,31 +1,25 @@
-import React from 'react'
+import React from "react";
 import { Box, Flex, Text } from "rebass";
-import { PieChart, Pie, Legend, Cell } from 'recharts';
+import { PieChart, Pie, Legend, Cell } from "recharts";
 
-import Modal from "./Modal"
-import TruncatedText from "./TruncatedText"
-import CopiableText from "./CopiableText"
-import Burn from "./Burn"
+import Modal from "./Modal";
+import TruncatedText from "./TruncatedText";
+import CopiableText from "./CopiableText";
+import Burn from "./Burn";
 
 import store from "../store";
 
-import { COMMITMENT_STATUS } from '../apis/localforage'
+import { COMMITMENT_STATUS } from "../apis/localforage";
 
 function CommitmentRow({ title, content }) {
   return (
-    <Flex
-      dir="row"
-      justifyContent="space-between"
-      paddingY={2}
-    >
+    <Flex dir="row" justifyContent="space-between" paddingY={2}>
       <div>{title}:</div>
       <TruncatedText>
-        <CopiableText id={`commitment-modal-${title}`}>
-          {content}
-        </CopiableText>
+        <CopiableText id={`commitment-modal-${title}`}>{content}</CopiableText>
       </TruncatedText>
     </Flex>
-  )
+  );
 }
 
 function GasUsage({ gasUsed }) {
@@ -33,12 +27,13 @@ function GasUsage({ gasUsed }) {
     byVerifierContract,
     byShieldContract,
     byCurrencyNetworkContract
-  } = gasUsed
+  } = gasUsed;
 
-  const total = Number(byVerifierContract) +
+  const total =
+    Number(byVerifierContract) +
     Number(byShieldContract) +
-    Number(byCurrencyNetworkContract)
-  
+    Number(byCurrencyNetworkContract);
+
   const pieChartData = [
     {
       name: "Verifier",
@@ -52,13 +47,9 @@ function GasUsage({ gasUsed }) {
       name: "CurrencyNetwork",
       value: Number(byCurrencyNetworkContract)
     }
-  ]
+  ];
 
-  const colors = [
-    "#bb99ff",
-    'hsl(290, 100%, 80%)',
-    'hsl(260, 20%, 40%)',
-  ]
+  const colors = ["#bb99ff", "hsl(290, 100%, 80%)", "hsl(260, 20%, 40%)"];
 
   return (
     <>
@@ -76,62 +67,34 @@ function GasUsage({ gasUsed }) {
           label
           paddingAngle={1}
         >
-          {
-            pieChartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-            ))
-          }
+          {pieChartData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+          ))}
         </Pie>
         <Legend verticalAlign="bottom" />
       </PieChart>
     </>
-  )
+  );
 }
 
 export default function CommitmentModal({ commitment, ...props }) {
-  const {
-    commitments: notes
-  } = store.useContainer();
+  const { commitments: notes } = store.useContainer();
 
-  const note = notes.find(n => n.commitment === commitment)
+  const note = notes.find(n => n.commitment === commitment);
 
   return note ? (
     <Modal {...props}>
       <Text textAlign={"center"} fontWeight={"bold"} m={2}>
         NOTE
       </Text>
-      <CommitmentRow
-        title={"Shield"}
-        content={note.shieldAddress}
-      />
-      <CommitmentRow
-        title={"Commitment"}
-        content={note.commitment}
-      />
-      <CommitmentRow
-        title={"ZKP PK Owner"}
-        content={note.zkpPublicKey}
-      />
-      <CommitmentRow
-        title={"Salt"}
-        content={note.salt}
-      />
-      <CommitmentRow
-        title={"Amount"}
-        content={note.amount.value}
-      />
-      <CommitmentRow
-        title={"Index"}
-        content={note.commitmentIndex}
-      />
-      <CommitmentRow
-        title={"Type"}
-        content={note.type}
-      />
-      <CommitmentRow
-        title={"Status"}
-        content={note.status}
-      />
+      <CommitmentRow title={"Shield"} content={note.shieldAddress} />
+      <CommitmentRow title={"Commitment"} content={note.commitment} />
+      <CommitmentRow title={"ZKP PK Owner"} content={note.zkpPublicKey} />
+      <CommitmentRow title={"Salt"} content={note.salt} />
+      <CommitmentRow title={"Amount"} content={note.amount.value} />
+      <CommitmentRow title={"Index"} content={note.commitmentIndex} />
+      <CommitmentRow title={"Type"} content={note.type} />
+      <CommitmentRow title={"Status"} content={note.status} />
       <GasUsage gasUsed={note.gasUsed} />
       {note.status === COMMITMENT_STATUS.UNSPENT ? (
         <Burn note={note} />
@@ -141,5 +104,5 @@ export default function CommitmentModal({ commitment, ...props }) {
         <Box />
       )}
     </Modal>
-  ) : null
+  ) : null;
 }

@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 import * as localforage from "../apis/localforage";
 
 export default function useCommitments() {
   const [commitments, setCommitments] = useState([]);
-  
+
   async function fetchCommitments(username) {
     const commitments = await localforage.getCommitmentsByUsername(username);
     setCommitments(commitments);
@@ -12,4 +12,3 @@ export default function useCommitments() {
 
   return { commitments, fetchCommitments };
 }
-

@@ -1,6 +1,6 @@
 import config from "../config";
 
-const NIGHTLINES_URL = `${config.NIGHTLINES_HOST}:${config.NIGHTLINES_PORT}`
+const NIGHTLINES_URL = `${config.NIGHTLINES_HOST}:${config.NIGHTLINES_PORT}`;
 
 export async function getZKPKeyPair() {
   const response = await fetch(`${NIGHTLINES_URL}/zkp-key-pair`);
@@ -30,7 +30,7 @@ export async function getMintProof(
   const response = await fetch(`${NIGHTLINES_URL}/mint-iou-commitment`, {
     method: "POST",
     headers: {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       shieldAddress,
@@ -42,7 +42,7 @@ export async function getMintProof(
 
   if (!response.ok) {
     const { error } = await response.json();
-    throw new Error(error.message || response.statusText)
+    throw new Error(error.message || response.statusText);
   }
 
   const proof = await response.json();
@@ -59,7 +59,7 @@ export async function getTransferProof(
   const response = await fetch(`${NIGHTLINES_URL}/transfer-iou-commitment`, {
     method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       shieldAddress,
@@ -79,11 +79,7 @@ export async function getTransferProofByKey(proofKey) {
   return key;
 }
 
-
-export async function getLeafByLeafIndex(
-  shieldAddress,
-  leafIndex
-) {
+export async function getLeafByLeafIndex(shieldAddress, leafIndex) {
   const response = await fetch(`${NIGHTLINES_URL}/leaf-by-leaf-index`);
   const keyPair = await response.json();
   return keyPair;
@@ -98,7 +94,7 @@ export async function getBurnProof(
   const response = await fetch(`${NIGHTLINES_URL}/burn-iou-commitment`, {
     method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       shieldAddress,

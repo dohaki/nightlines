@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef } from "react";
 
 const useEventListener = (initialEventName, initialElement = global) => {
   const [eventName] = useState(initialEventName);
@@ -12,7 +12,7 @@ const useEventListener = (initialEventName, initialElement = global) => {
 
     const eventListener = handler;
     element.addEventListener(eventName, eventListener);
-    
+
     savedEventListenerRemover.current = () => {
       element.removeEventListener(eventName, eventListener);
     };
@@ -21,7 +21,7 @@ const useEventListener = (initialEventName, initialElement = global) => {
   return {
     destroyListener: savedEventListenerRemover.current,
     addListener
-  }
+  };
 };
 
 export default useEventListener;

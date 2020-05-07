@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { Box } from "rebass";
 
 export default function Container(props) {
@@ -6,11 +6,11 @@ export default function Container(props) {
     <Box
       sx={{
         maxWidth: 512,
-        mx: 'auto',
+        mx: "auto",
         p: 3,
-        pt: 6,
+        pt: 6
       }}
       {...props}
     />
-  )
+  );
 }

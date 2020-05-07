@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Heading, Text } from 'rebass';
-import { Input } from '@rebass/forms';
+import React, { useState, useEffect } from "react";
+import { Box, Heading, Text } from "rebass";
+import { Input } from "@rebass/forms";
 import { useHistory } from "react-router-dom";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 import Container from "../components/Container";
 import Button from "../components/Button";
@@ -18,17 +18,17 @@ export default function Login() {
 
   useEffect(() => {
     if (sessionStorage.getCurrentUsername()) {
-      history.replace("/")
+      history.replace("/");
     }
-  }, [history])
+  }, [history]);
 
   const handleClick = async () => {
     try {
       setLoading(true);
-      let user = await localforage.getUserByUsername(username)
+      let user = await localforage.getUserByUsername(username);
       if (!user) {
         user = await tlLib.createUser(username);
-        await localforage.setUser(user)
+        await localforage.setUser(user);
       }
       await tlLib.loadUser(user.walletData);
       await tlLib.getCoins();
@@ -37,7 +37,7 @@ export default function Login() {
     } catch (error) {
       toast(error.toString(), { type: "error" });
     }
-  }
+  };
 
   return (
     <Container>
@@ -49,13 +49,9 @@ export default function Login() {
           onChange={event => setUsername(event.target.value)}
         />
       </Box>
-      <Button
-        onClick={handleClick}
-        loading={loading}
-        minWidth={200}
-      >
+      <Button onClick={handleClick} loading={loading} minWidth={200}>
         Let's Go
       </Button>
     </Container>
-  )
+  );
 }

@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Flex } from "rebass";
 import { get } from "lodash";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 import Button from "./Button";
 
-import {
-  useBurnProofEventListener
-} from "../hooks/useProofEventListener";
+import { useBurnProofEventListener } from "../hooks/useProofEventListener";
 import store from "../store";
 
 import * as tlLib from "../apis/tlLib";
@@ -21,7 +19,7 @@ export default function Burn({ note }) {
     selectedNetwork,
     loadedUser,
     fetchCommitments,
-    fetchOverview,
+    fetchOverview
   } = store.useContainer();
 
   const shieldAddress = get(selectedNetwork, "shield.address");
@@ -37,28 +35,28 @@ export default function Burn({ note }) {
         shieldAddress,
         userAddress,
         note,
-        zkpPrivateKey,
+        zkpPrivateKey
       );
 
       if (typeof burnProofOrKey === "string") {
-        addBurnProofKey(burnProofOrKey)
+        addBurnProofKey(burnProofOrKey);
       }
 
       if (typeof burnProofOrKey === "object") {
-        handleBurnProof(burnProofOrKey)
+        handleBurnProof(burnProofOrKey);
       }
     } catch (error) {
       console.error(error);
       toast(error.toString(), { type: "error" });
       setLoading(false);
     }
-  }
+  };
 
   const handleBurnProof = async burnProof => {
-    try {      
+    try {
       toast(`Burn proof generated`, { type: "info" });
-      console.log({ burnProof })
-  
+      console.log({ burnProof });
+
       const burnNote = await tlLib.burnCommitment(
         shieldAddress,
         burnProof.proof,
@@ -68,14 +66,11 @@ export default function Burn({ note }) {
         note.amount.value,
         userAddress
       );
-  
-      const storedNote = await localforage.setCommitment(
-        username,
-        {
-          ...note,
-          ...burnNote
-        }
-      );
+
+      const storedNote = await localforage.setCommitment(username, {
+        ...note,
+        ...burnNote
+      });
       console.log("stored burn note: ", storedNote);
       toast("Successfully burned note", { type: "success" });
       fetchCommitments(username);
@@ -86,19 +81,15 @@ export default function Burn({ note }) {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useBurnProofEventListener(handleBurnProof);
 
   return (
     <Flex justifyContent="center" my={3}>
-      <Button
-        loading={loading}
-        onClick={handleClick}
-        minWidth={150}
-      >
+      <Button loading={loading} onClick={handleClick} minWidth={150}>
         Burn
       </Button>
     </Flex>
-  )
-};
+  );
+}
