@@ -150,11 +150,10 @@ export async function getAllRegisteredVKs(shieldAddress) {
   return registeredVKs;
 }
 
-export async function openCollateralized(gatewayAddress, collateral, given) {
+export async function openCollateralized(gatewayAddress, collateral) {
   const openCollateralizedTx = await tlNetwork.trustline.prepareOpenCollateralized(
     gatewayAddress,
-    collateral,
-    given
+    collateral
   );
   const txHash = await confirmTx(openCollateralizedTx.rawTx);
   // TODO

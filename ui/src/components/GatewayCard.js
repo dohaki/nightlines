@@ -8,8 +8,6 @@ import OpenCTL from "./OpenCTL";
 
 import store from "../store";
 
-import * as tlLib from "../apis/tlLib";
-
 export default function GatewayCard() {
   const {
     gatewayDeposit,
