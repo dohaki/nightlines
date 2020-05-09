@@ -49,7 +49,7 @@ export async function getNetworks() {
   return tlNetwork.currencyNetwork.getAll();
 }
 
-export async function getLatesBlocknumber() {
+export async function getLatestBlocknumber() {
   const response = await fetch(`${tlNetwork.provider.relayApiUrl}/blocknumber`);
   const blocknumber = await response.json();
   return blocknumber;
@@ -214,7 +214,7 @@ export async function mintCommitment(
 
   await wait();
 
-  const latestBlocknumber = await getLatesBlocknumber();
+  const latestBlocknumber = await getLatestBlocknumber();
 
   // Add information on used gas for statistics
   const gasUsed = await getGasUsedForTx(
@@ -254,7 +254,8 @@ export async function burnCommitment(
   inputs,
   root,
   nullifier,
-  value
+  value,
+  payTo
 ) {
   const burnTx = await tlNetwork.shield.prepareBurnCommitment(
     shieldAddress,
@@ -263,6 +264,7 @@ export async function burnCommitment(
     root,
     nullifier,
     value,
+    payTo,
     {
       gasLimit: "2000000"
     }
@@ -271,7 +273,7 @@ export async function burnCommitment(
 
   await wait();
 
-  const latestBlocknumber = await getLatesBlocknumber();
+  const latestBlocknumber = await getLatestBlocknumber();
 
   // Add information on used gas for statistics
   const gasUsed = await getGasUsedForTx(
@@ -315,7 +317,7 @@ export async function transferCommitment(
       gasLimit: "2000000"
     }
   );
-  const latestBlocknumber = await getLatesBlocknumber();
+  const latestBlocknumber = await getLatestBlocknumber();
 
   const transferTxHash = await confirmTx(transferTx.rawTx);
 
