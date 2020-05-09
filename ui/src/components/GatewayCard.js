@@ -5,6 +5,7 @@ import { get } from "lodash";
 import DashboardCard from "./DashboardCard";
 import CopiableText from "./CopiableText";
 import OpenCTL from "./OpenCTL";
+import PayOffDebt from "./PayOffDebt";
 
 import store from "../store";
 
@@ -40,6 +41,7 @@ export default function GatewayCard() {
         <Text>{gatewayDeposit}</Text>
       </Flex>
       <OpenCTL />
+      <PayOffDebt />
     </DashboardCard>
   );
 }

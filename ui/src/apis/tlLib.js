@@ -177,6 +177,30 @@ export async function openCollateralized(gatewayAddress, collateral) {
   await wait();
 }
 
+export async function claimCredit(gatewayAddress, claimValue) {
+  const claimTx = await tlNetwork.trustline.prepareClaim(
+    gatewayAddress,
+    claimValue
+  );
+  await confirmTx(claimTx.rawTx);
+  await wait();
+}
+
+export async function payOffDebt(gatewayAddress, payOffValue) {
+  const payOffTx = await tlNetwork.trustline.preparePayOff(
+    gatewayAddress,
+    payOffValue
+  );
+  await confirmTx(payOffTx.rawTx);
+  await wait();
+}
+
+export async function closeCollateralizedTrustline(gatewayAddress) {
+  const closeTx = await tlNetwork.trustline.closeCollateralized(gatewayAddress);
+  await confirmTx(closeTx.rawTx);
+  await wait();
+}
+
 export async function registerVK(shieldAddress, vkType) {
   const vk = await nightlines.getVKOf(vkType);
   const registerVKTx = await tlNetwork.shield.prepareRegisterVK(
