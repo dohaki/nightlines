@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Text, Flex, Box } from "rebass";
-import { Input } from "@rebass/forms";
+import React, { useEffect } from "react";
+import { Text, Flex } from "rebass";
 import { get } from "lodash";
-import { toast } from "react-toastify";
 
 import DashboardCard from "./DashboardCard";
 import CopiableText from "./CopiableText";
-import Button from "../components/Button";
+import OpenCTL from "./OpenCTL";
 
 import store from "../store";
 
@@ -16,18 +14,11 @@ export default function GatewayCard() {
   const {
     gatewayDeposit,
     fetchGatewayDeposit,
-    fetchOverview,
-    fetchCoinBalance,
     selectedNetwork,
     loadedUser
   } = store.useContainer();
-  const [collateral, setCollateral] = useState(0);
-  const [iouGiven, setIOUGiven] = useState(0);
-  const [loading, setLoading] = useState(false);
 
   const gatewayAddress = get(selectedNetwork, "gateway.address");
-  const iouAddress = get(selectedNetwork, "address");
-  const iouAbbreviation = get(selectedNetwork, "abbreviation");
   const userAddress = get(loadedUser, "walletData.address");
 
   useEffect(() => {
@@ -36,23 +27,6 @@ export default function GatewayCard() {
     }
     // eslint-disable-next-line
   }, [gatewayAddress, userAddress]);
-
-  const handleClick = async () => {
-    try {
-      setLoading(true);
-      await tlLib.openCollateralized(gatewayAddress, collateral, iouGiven);
-      fetchOverview(iouAddress, userAddress);
-      fetchGatewayDeposit(gatewayAddress, userAddress);
-      fetchCoinBalance();
-      setCollateral(0);
-      setIOUGiven(0);
-      toast("Deposit success", { type: "success" });
-    } catch (error) {
-      toast(error.toString(), { type: "error" });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <DashboardCard>
@@ -67,36 +41,7 @@ export default function GatewayCard() {
         <Text>TLC Deposit:</Text>
         <Text>{gatewayDeposit}</Text>
       </Flex>
-      <Flex mt={3} justifyContent={"space-between"}>
-        <Box>
-          <Text>TLC Collateral</Text>
-          <Input
-            width={150}
-            type={"number"}
-            step={0.0000000001}
-            min={0}
-            value={collateral}
-            onChange={event => setCollateral(event.target.value)}
-          />
-        </Box>
-        <Box>
-          <Text>{iouAbbreviation} Given</Text>
-          <Input
-            width={150}
-            type={"number"}
-            step={1}
-            min={0}
-            value={iouGiven}
-            onChange={event => setIOUGiven(event.target.value)}
-          />
-        </Box>
-        <Box>
-          <Text color={"background"}>{"invisible"}</Text>
-          <Button loading={loading} onClick={handleClick} minWidth={150}>
-            Deposit
-          </Button>
-        </Box>
-      </Flex>
+      <OpenCTL />
     </DashboardCard>
   );
 }
