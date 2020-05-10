@@ -10842,7 +10842,7 @@ tr46@^1.0.1:
 
 trustlines-clientlib@dakingha69/clientlib.git#nightlines:
   version "0.11.1-0"
-  resolved "https://codeload.github.com/dakingha69/clientlib/tar.gz/c54dc009be416a60a91b67f4e2d5fa5b0127e237"
+  resolved "https://codeload.github.com/dakingha69/clientlib/tar.gz/c51ed7386abae7a0fc4b0785bee6d5124dcbdaf1"
   dependencies:
     axios "^0.19.2"
     bignumber.js "7.2.1"

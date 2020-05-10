@@ -167,14 +167,17 @@ export async function openCollateralized(gatewayAddress, collateral) {
   const collateralRequest = updateRequests.find(
     ({ transactionId }) => transactionId === txHash
   );
-  const acceptTx = await tlNetwork.trustline.prepareAccept(
-    collateralRequest.networkAddress,
-    gatewayAddress,
-    collateralRequest.received.value,
-    collateralRequest.given.value
-  );
-  await confirmTx(acceptTx.rawTx);
-  await wait();
+
+  if (collateralRequest) {
+    const acceptTx = await tlNetwork.trustline.prepareAccept(
+      collateralRequest.networkAddress,
+      gatewayAddress,
+      collateralRequest.received.value,
+      collateralRequest.given.value
+    );
+    await confirmTx(acceptTx.rawTx);
+    await wait();
+  }
 }
 
 export async function claimCredit(gatewayAddress, claimValue) {
