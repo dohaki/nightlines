@@ -1,3 +1,4 @@
+// Number of constraints: 1150474
 import "hashes/sha256/1536bit.code" as sha256of1536
 import "hashes/sha256/1024bit.code" as sha256of1024
 import "hashes/sha256/512bit.code" as sha256of512
