@@ -6,6 +6,8 @@ import DashboardCard from "./DashboardCard";
 import CopiableText from "./CopiableText";
 import OpenCTL from "./OpenCTL";
 import PayOffDebt from "./PayOffDebt";
+import ClaimCredit from "./ClaimCredit";
+import CloseCTL from "./CloseCTL";
 
 import store from "../store";
 
@@ -14,11 +16,13 @@ export default function GatewayCard() {
     gatewayDeposit,
     fetchGatewayDeposit,
     selectedNetwork,
-    loadedUser
+    loadedUser,
+    overview
   } = store.useContainer();
 
   const gatewayAddress = get(selectedNetwork, "gateway.address");
   const userAddress = get(loadedUser, "walletData.address");
+  const iouBalance = get(overview, "balance.value");
 
   useEffect(() => {
     if (gatewayAddress && userAddress) {
@@ -41,7 +45,13 @@ export default function GatewayCard() {
         <Text>{gatewayDeposit}</Text>
       </Flex>
       <OpenCTL />
-      <PayOffDebt />
+      {iouBalance < 0 ? (
+        <PayOffDebt />
+      ) : iouBalance > 0 ? (
+        <ClaimCredit />
+      ) : iouBalance === 0 ? (
+        <CloseCTL />
+      ) : null}
     </DashboardCard>
   );
 }

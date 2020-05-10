@@ -69,7 +69,7 @@ export default function Dashboard() {
       </Box>
       <Box mx="auto" />
       {loadedUser ? (
-        <Flex justifyContent={"space-between"} flexWrap={"wrap"}>
+        <Flex justifyContent={"space-evenly"} flexWrap={"wrap"}>
           <OverviewCard />
           <GatewayCard />
           <ShieldCard />
