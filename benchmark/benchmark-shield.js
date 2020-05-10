@@ -96,13 +96,13 @@ async function getGasUsedForTx(
   return events.find(({ transactionId }) => transactionId === txHash);
 }
 
-async function getLatesBlocknumber(relayApiUrl) {
+async function getLatestBlocknumber(relayApiUrl) {
   const { data: blocknumber } = await axios.get(`${relayApiUrl}/blocknumber`);
   return blocknumber;
 }
 
 async function getGasStatsForTx(relayApiUrl, shieldAddress, txHash) {
-  const latestBlocknumber = await getLatesBlocknumber(relayApiUrl);
+  const latestBlocknumber = await getLatestBlocknumber(relayApiUrl);
 
   // Add information on used gas for statistics
   const gasUsed = await getGasUsedForTx(
@@ -163,7 +163,7 @@ async function mint({ tlInstance, amount, shieldAddress, zkpPublicKey }) {
 
   await wait();
 
-  const latestBlocknumber = await getLatesBlocknumber(
+  const latestBlocknumber = await getLatestBlocknumber(
     tlInstance.provider.relayApiUrl
   );
   const newLeafEvents = await getNewLeafEvents(
@@ -236,7 +236,7 @@ async function transfer({
       gasLimit: "2000000"
     }
   );
-  const latestBlocknumber = await getLatesBlocknumber(
+  const latestBlocknumber = await getLatestBlocknumber(
     tlInstance.provider.relayApiUrl
   );
 
