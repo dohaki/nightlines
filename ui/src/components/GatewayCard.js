@@ -22,7 +22,8 @@ export default function GatewayCard() {
 
   const gatewayAddress = get(selectedNetwork, "gateway.address");
   const userAddress = get(loadedUser, "walletData.address");
-  const iouBalance = get(overview, "balance.value");
+  const iouBalance = Number(get(overview, "balance.value", 0));
+  const iouAvailable = Number(get(overview, "leftReceived.value", 0));
 
   useEffect(() => {
     if (gatewayAddress && userAddress) {
@@ -49,7 +50,7 @@ export default function GatewayCard() {
         <PayOffDebt />
       ) : iouBalance > 0 ? (
         <ClaimCredit />
-      ) : iouBalance === 0 ? (
+      ) : iouAvailable > 0 ? (
         <CloseCTL />
       ) : null}
     </DashboardCard>
