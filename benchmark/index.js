@@ -10,7 +10,8 @@ import { benchmarkShield } from "./benchmark-shield.js";
 import {
   writeToCsv,
   getAverageValuesOfZok,
-  getAverageValuesOfShield
+  getAverageValuesOfShield,
+  getAverageValuesOfGateway
 } from "./utils.js";
 
 const tl1 = new tl.TLNetwork({
@@ -44,15 +45,13 @@ async function start() {
     await createAndLoadUsers(tlInstances);
     await loadCoins(tlInstances);
 
-    // setup zokrates
     await setupZokrates();
 
     const shieldBenchmarkData = await benchmarkShield(tlInstances, n);
     writeToCsv("shield.csv", shieldBenchmarkData);
 
-    // constant gas usage therefore n = 1
-    const gatewaBenchmarkData = await benchmarkGateway(tl1, n);
-    writeToCsv("gateway.csv", gatewaBenchmarkData);
+    const gatewayBenchmarkData = await benchmarkGateway(tlInstances, n);
+    writeToCsv("gateway.csv", gatewayBenchmarkData);
 
     const zokCompileBenchmarkData = await benchmarkZok(zokStep.COMPILE, n);
     writeToCsv(`zokrates-${zokStep.COMPILE}.csv`, zokCompileBenchmarkData);
@@ -86,15 +85,19 @@ async function start() {
     const shieldAveragesCSV = await getAverageValuesOfShield();
     writeToCsv(`shield-averages.csv`, shieldAveragesCSV);
 
+    // average values for gateway related data
+    const gatewayAveragesCSV = await getAverageValuesOfGateway();
+    writeToCsv(`gateway-averages.csv`, gatewayAveragesCSV);
+
     console.log(chalk.green("\n==================="));
-    console.log(chalk.green(" BENCHMARK SUCCESS"));
+    console.log(chalk.green("[ BENCHMARK SUCCESS ]"));
     console.log(chalk.green("==================="));
     console.log(
-      "Benchmarking data are stored as .csv file in ./benchmark/data"
+      "Benchmarking data are stored as .csv files in ./benchmark/data"
     );
   } catch (error) {
     console.log(chalk.red("\n=================="));
-    console.log(chalk.red(" BENCHMARK FAILED"));
+    console.log(chalk.red("[ BENCHMARK FAILED ]"));
     console.log(chalk.red("=================="));
     console.error(error);
   }

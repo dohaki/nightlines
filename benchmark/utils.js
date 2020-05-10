@@ -1,8 +1,50 @@
 import { writeFileSync } from "fs";
 import csv from "csvtojson";
 
+export function wait(waitingTime = 1000) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, waitingTime);
+  });
+}
+
 export function writeToCsv(csvFileName, csvData) {
   writeFileSync(`${process.cwd()}/benchmark/data/${csvFileName}`, csvData);
+}
+
+export async function getAverageValuesOfGateway() {
+  const csvDataAsJson = await csv().fromFile(
+    `${process.cwd()}/benchmark/data/gateway.csv`
+  );
+  const openData = csvDataAsJson.filter(({ method }) => method === "open");
+  const payOffData = csvDataAsJson.filter(({ method }) => method === "payOff");
+  const claimData = csvDataAsJson.filter(({ method }) => method === "claim");
+  const closeData = csvDataAsJson.filter(({ method }) => method === "close");
+
+  const openAggregatedValues = getAggregatedValuesGateway(openData);
+  const payOffAggregatedValues = getAggregatedValuesGateway(payOffData);
+  const claimAggregatedValues = getAggregatedValuesGateway(claimData);
+  const closeAggregatedValues = getAggregatedValuesGateway(closeData);
+
+  const averagesAsCSV = ["method,average gas"];
+
+  const openAvg = getRoundedAverage(openAggregatedValues, openData.length);
+  averagesAsCSV.push(`open,${openAvg}`);
+
+  const payOffAvg = getRoundedAverage(
+    payOffAggregatedValues,
+    payOffData.length
+  );
+  averagesAsCSV.push(`payOff,${payOffAvg}`);
+
+  const claimAvg = getRoundedAverage(claimAggregatedValues, claimData.length);
+  averagesAsCSV.push(`claim,${claimAvg}`);
+
+  const closeAvg = getRoundedAverage(closeAggregatedValues, closeData.length);
+  averagesAsCSV.push(`close,${closeAvg}`);
+
+  return averagesAsCSV.join("\n");
 }
 
 export async function getAverageValuesOfShield() {
@@ -102,6 +144,12 @@ function getAggregatedValuesZok(csvDataAsJson) {
     },
     { time: 0, memory: 0 }
   );
+}
+
+function getAggregatedValuesGateway(csvDataAsJson) {
+  return csvDataAsJson.reduce((sum, data) => {
+    return sum + Number(data.gas);
+  }, 0);
 }
 
 function getAggregatedValuesShield(csvDataAsJson) {
